@@ -1,169 +1,2292 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國文閱讀理解適性練習系統</title>
-  <style>
-    body { font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; background-color: #f4f1ea; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; }
-    .card { background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 20px; }
-    h1, h2 { color: #2c3e50; border-bottom: 2px solid #8c6d46; padding-bottom: 8px; }
-    .passage { background: #faf8f5; padding: 18px; border-left: 4px solid #8c6d46; white-space: pre-wrap; font-size: 1.05em; margin-bottom: 15px; }
-    input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin: 8px 0 16px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-    button { background-color: #8c6d46; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
-    button:hover { background-color: #705636; }
-    .option-label { display: block; padding: 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
-    .option-label:hover { background-color: #f9f6f0; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-    th { background-color: #8c6d46; color: white; }
-    .hidden { display: none; }
-    .result-box { margin-top: 10px; padding: 10px; border-radius: 5px; }
-    .correct { background-color: #e8f5e9; color: #2e7d32; }
-    .wrong { background-color: #ffebee; color: #c62828; }
-  </style>
-</head>
-<body>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文心研習室 ｜ 國中適性國文測驗與數據後台</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans TC & Noto Serif TC for refined junior-high literary feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tone.js for subtle, crisp UI feedback sounds -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 
-  <!-- 登入畫面 -->
-  <div id="login-section" class="card">
-    <h1>國文閱讀理解練習平台</h1>
-    <label>學號（或教師帳號）：</label>
-    <input type="text" id="user-id" placeholder="請輸入學號">
-    <label>生日（密碼）：</label>
-    <input type="password" id="user-pw" placeholder="請輸入生日">
-    <button onclick="login()">登入系統</button>
-    <p id="login-msg" style="color: red;"></p>
-  </div>
-
-  <!-- 學生作答畫面 -->
-  <div id="student-section" class="hidden">
-    <div class="card">
-      <h2 id="student-welcome"></h2>
-      <p>系統已根據你的閱讀能力分級為你挑選以下文章與題目：</p>
-    </div>
-    <div id="quiz-container"></div>
-    <button id="submit-btn" onclick="submitAnswers()">送出所有答案</button>
-  </div>
-
-  <!-- 教師後台畫面 -->
-  <div id="teacher-section" class="card hidden">
-    <h2>教師管理後台 - 學生作答紀錄</h2>
-    <p>老師您好，以下是所有學生的即時作答紀錄（亦可直接開啟 Google 試算表檢視完整報表）：</p>
-    <div style="overflow-x:auto;">
-      <table id="records-table">
-        <thead>
-          <tr><th>作答時間</th><th>學號</th><th>姓名</th><th>題號</th><th>學生選項</th><th>結果</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-
-<script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbyV2avQAjSnry6G8ab2iRDPP2SqdrYhExcU3bSK3RKa-SZxDKSqtsP_dsE9LCl0e0pm6A/exec";
-  let currentUser = null;
-
-  async function login() {
-    const id = document.getElementById("user-id").value;
-    const pw = document.getElementById("user-pw").value;
-    const msg = document.getElementById("login-msg");
-    if (!id || !pw) { msg.innerText = "請輸入帳號與密碼"; return; }
-    
-    msg.innerText = "驗證身分與載入題庫中，請稍候...";
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "login", id: id, password: pw })
-      });
-      const data = await res.json();
-
-      if (data.status === "success") {
-        currentUser = data;
-        document.getElementById("login-section").classList.add("hidden");
-        if (data.role === "教師") {
-          renderTeacherView(data.records);
-        } else {
-          renderStudentView(data);
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                        serif: ['"Noto Serif TC"', 'serif'],
+                    },
+                    colors: {
+                        paper: '#FAF9F6',
+                        card: '#FFFFFF',
+                        ink: '#263238',
+                        inklight: '#607D8B',
+                        sage: '#3B6E6C',
+                        sagelight: '#E8F1F1',
+                        terracotta: '#C86D51',
+                        terralight: '#F9EBE7',
+                        ochre: '#D49A42',
+                    ochrelight: '#FBF4E6',
+                    slateaccent: '#4B6584',
+                    slatelight: '#EDF2F7',
+                    plum: '#6D597A',
+                    plumlight: '#F3EFF5',
+                    sand: '#E6E2D8'
+                },
+                boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(38, 50, 56, 0.06)',
+                        'card-hover': '0 8px 25px -4px rgba(38, 50, 56, 0.1)',
+                    }
+                }
+            }
         }
-      } else {
-        msg.innerText = data.message || "登入失敗";
-      }
-    } catch (err) {
-      msg.innerText = "連線發生錯誤，請檢查網路或網址設定。";
-    }
-  }
+    </script>
 
-  function renderStudentView(data) {
-    document.getElementById("student-section").classList.remove("hidden");
-    document.getElementById("student-welcome").innerText = `${data.name} 同學你好（目前能力分級：${data.level}）`;
-    const container = document.getElementById("quiz-container");
-    
-    if (data.questions.length === 0) {
-      container.innerHTML = "<div class='card'><p>目前此能力分級尚無題目，請通知老師新增。</p></div>";
-      document.getElementById("submit-btn").classList.add("hidden");
-      return;
-    }
+    <style>
+        body {
+            background-color: #FAF9F6;
+            background-image: linear-gradient(to right, rgba(230, 226, 216, 0.35) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(230, 226, 216, 0.35) 1px, transparent 1px);
+            background-size: 32px 32px;
+            color: #263238;
+            overflow-x: hidden;
+        }
 
-    data.questions.forEach((q, idx) => {
-      const qDiv = document.createElement("div");
-      qDiv.className = "card";
-      qDiv.innerHTML = `
-        <h3>第 ${idx + 1} 題：${q.title}</h3>
-        <div class="passage">${q.passage}</div>
-        <p><strong>題目：${q.question}</strong></p>
-        ${['A', 'B', 'C', 'D'].map(opt => `
-          <label class="option-label">
-            <input type="radio" name="q_${idx}" value="${opt}"> (${opt}) ${q.options[opt]}
-          </label>
-        `).join('')}
-        <div id="feedback_${idx}" class="result-box hidden"></div>
-      `;
-      container.appendChild(qDiv);
-    });
-  }
+        .btn-press {
+            transition: all 0.15s ease;
+        }
+        .btn-press:active {
+            transform: scale(0.98);
+        }
 
-  async function submitAnswers() {
-    const records = [];
-    currentUser.questions.forEach((q, idx) => {
-      const selected = document.querySelector(`input[name="q_${idx}"]:checked`);
-      const choice = selected ? selected.value : "未作答";
-      const isCorrect = (choice === q.answer);
-      
-      records.push({ qid: q.qid, choice: choice, isCorrect: isCorrect });
+        /* Custom sleek scrollbar */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FAF9F6;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-sage selection:text-white">
 
-      const fb = document.getElementById(`feedback_${idx}`);
-      fb.classList.remove("hidden");
-      fb.className = `result-box ${isCorrect ? 'correct' : 'wrong'}`;
-      fb.innerHTML = `<strong>${isCorrect ? '答對了！' : '答錯了，正確答案是 (' + q.answer + ')'}</strong><br>解析：${q.explanation}`;
-    });
+    <!-- Top Navigation Bar -->
+    <header class="w-full bg-white/95 backdrop-blur-md border-b border-sand sticky top-0 z-40 px-4 sm:px-6 py-3.5 shadow-soft">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="resetToHome()">
+                <div class="w-10 h-10 rounded-xl bg-sage flex items-center justify-center text-white text-lg shadow-sm">
+                    <i class="fa-solid fa-book-bookmark"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-serif font-bold tracking-wide text-ink flex items-center gap-2">
+                        文心研習室
+                        <span class="text-[11px] font-sans bg-sagelight text-sage px-2.5 py-0.5 rounded-md font-bold tracking-normal">國中適性國文</span>
+                    </h1>
+                    <p class="text-xs text-inklight hidden sm:block">分項能力診斷・每日作答追蹤・試算表雲端題庫</p>
+                </div>
+            </div>
 
-    document.getElementById("submit-btn").disabled = true;
-    document.getElementById("submit-btn").innerText = "成績傳送中...";
+            <!-- Right Controls -->
+            <div class="flex items-center gap-2.5">
+                <!-- Sound Toggle -->
+                <button onclick="toggleSound()" id="sound-btn" title="提示音效開關" class="btn-press w-9 h-9 rounded-xl bg-paper hover:bg-sand/50 border border-sand text-inklight flex items-center justify-center">
+                    <i class="fa-solid fa-volume-high text-sm" id="sound-icon"></i>
+                </button>
 
-    await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "submit",
-        id: currentUser.id,
-        name: currentUser.name,
-        records: records
-      })
-    });
+                <!-- User Info / Logout -->
+                <div id="user-nav-pill" class="hidden items-center gap-2.5 bg-slatelight border border-slate-200 px-3 py-1.5 rounded-xl">
+                    <span id="nav-user-name" class="text-xs sm:text-sm font-bold text-ink"></span>
+                    <button onclick="logout()" class="text-xs bg-white hover:bg-rose-50 text-rose-600 px-2.5 py-1 rounded-lg font-bold border border-slate-200 transition">
+                        登出
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
 
-    document.getElementById("submit-btn").innerText = "作答紀錄已成功傳送給老師！";
-  }
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
 
-  function renderTeacherView(records) {
-    document.getElementById("teacher-section").classList.remove("hidden");
-    const tbody = document.querySelector("#records-table tbody");
-    records.reverse().forEach(row => {
-      const tr = document.createElement("tr");
-      const timeStr = new Date(row[0]).toLocaleString("zh-TW");
-      tr.innerHTML = `<td>${timeStr}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td>`;
-      tbody.appendChild(tr);
-    });
-  }
-</script>
+        <!-- ========================================================= -->
+        <!-- VIEW 1: LOGIN PORTAL (STUDENT & TEACHER)                  -->
+        <!-- ========================================================= -->
+        <section id="view-login" class="max-w-md mx-auto">
+            <div class="bg-white rounded-2xl border border-sand shadow-soft overflow-hidden">
+                <!-- Role Switch Tabs -->
+                <div class="grid grid-cols-2 border-b border-sand bg-paper/60">
+                    <button onclick="switchLoginTab('student')" id="tab-login-student" class="py-4 font-bold text-sm text-sage border-b-2 border-sage bg-white transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-user-graduate"></i> 學生登入
+                    </button>
+                    <button onclick="switchLoginTab('teacher')" id="tab-login-teacher" class="py-4 font-bold text-sm text-inklight hover:text-ink transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-chalkboard-user"></i> 教師後台
+                    </button>
+                </div>
+
+                <!-- Student Login Form -->
+                <form id="form-student-login" onsubmit="handleStudentLogin(event)" class="p-6 sm:p-8 space-y-5">
+                    <div class="space-y-1">
+                        <h2 class="text-xl font-serif font-bold text-ink">登入每日國文適性測驗</h2>
+                        <p class="text-xs text-inklight">請輸入學號與生日，進入教師為你派發的專屬分卷。</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-ink mb-1.5">學號</label>
+                        <input type="text" id="stu-id-input" required placeholder="例如：80101" class="w-full px-4 py-3 rounded-xl bg-paper border border-sand focus:border-sage focus:bg-white focus:outline-none text-sm font-medium transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-ink mb-1.5">登入密碼（預設為 4 碼生日，如 0512；登入後可自行修改）</label>
+                        <input type="password" id="stu-bday-input" required placeholder="例如：0512" class="w-full px-4 py-3 rounded-xl bg-paper border border-sand focus:border-sage focus:bg-white focus:outline-none text-sm font-medium transition">
+                    </div>
+
+                    <button type="submit" class="btn-press w-full py-3.5 rounded-xl bg-sage hover:bg-teal-800 text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2">
+                        <span>進入我的學習任務</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+
+                    <!-- Demo Quick Fill -->
+                    <div class="pt-4 border-t border-sand/80">
+                        <p class="text-[11px] font-bold text-inklight mb-2">測試帳號快速填入（不同分項能力組合）：</p>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button type="button" onclick="fillDemoStudent('80101', '0512')" class="text-xs bg-paper hover:bg-sagelight hover:text-sage text-ink border border-sand px-2.5 py-1.5 rounded-lg font-medium transition">
+                                80101 林宇軒 (文言不派卷)
+                            </button>
+                            <button type="button" onclick="fillDemoStudent('80102', '0823')" class="text-xs bg-paper hover:bg-sagelight hover:text-sage text-ink border border-sand px-2.5 py-1.5 rounded-lg font-medium transition">
+                                80102 陳宥希 (三卷皆派)
+                            </button>
+                            <button type="button" onclick="fillDemoStudent('80103', '1104')" class="text-xs bg-paper hover:bg-sagelight hover:text-sage text-ink border border-sand px-2.5 py-1.5 rounded-lg font-medium transition">
+                                80103 張子晴 (三科精熟)
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Teacher Login Form -->
+                <form id="form-teacher-login" onsubmit="handleTeacherLogin(event)" class="hidden p-6 sm:p-8 space-y-5">
+                    <div class="space-y-1">
+                        <h2 class="text-xl font-serif font-bold text-ink">教師數據與適性分組後台</h2>
+                        <p class="text-xs text-inklight">檢視班級每日各卷平均成績，並彈性調整各項目派卷組別。</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-ink mb-1.5">教師帳號</label>
+                        <input type="text" id="teacher-user-input" required value="teacher" class="w-full px-4 py-3 rounded-xl bg-paper border border-sand focus:border-terracotta focus:bg-white focus:outline-none text-sm font-medium transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-ink mb-1.5">管理密碼</label>
+                        <input type="password" id="teacher-pass-input" required value="1234" class="w-full px-4 py-3 rounded-xl bg-paper border border-sand focus:border-terracotta focus:bg-white focus:outline-none text-sm font-medium transition">
+                    </div>
+
+                    <button type="submit" class="btn-press w-full py-3.5 rounded-xl bg-terracotta hover:bg-orange-700 text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2">
+                        <span>登入教師後台</span>
+                        <i class="fa-solid fa-chart-line"></i>
+                    </button>
+                    <p class="text-[11px] text-center text-inklight">預設體驗帳號：<code class="bg-paper px-1.5 py-0.5 rounded border border-sand">teacher</code> ／ 密碼：<code class="bg-paper px-1.5 py-0.5 rounded border border-sand">1234</code></p>
+                </form>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 2: STUDENT DASHBOARD & SEPARATE VOLUME LOBBY         -->
+        <!-- ========================================================= -->
+        <section id="view-student-lobby" class="hidden max-w-4xl mx-auto space-y-6">
+            <!-- Student Profile Banner -->
+            <div class="bg-white rounded-2xl border border-sand p-6 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div id="stu-monogram" class="w-14 h-14 rounded-2xl bg-sage text-white font-serif font-bold text-2xl flex items-center justify-center shrink-0">
+                        林
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <h2 id="stu-welcome-name" class="text-xl sm:text-2xl font-serif font-bold text-ink">林宇軒 同學</h2>
+                            <span id="stu-id-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-slatelight text-slateaccent border border-slate-200">
+                                學號 80101
+                            </span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-inklight mt-1">請依序點選今日教師派發的「分科題本卷」進行作答（每卷 10 題）。</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 shrink-0">
+                    <div class="text-xs font-bold text-sage bg-sagelight px-3.5 py-2 rounded-xl border border-sage/20">
+                        <i class="fa-regular fa-calendar-check mr-1.5"></i>今日日期：<span id="stu-today-date">2026/11/19</span>
+                    </div>
+                    <button onclick="openChangePasswordModal()" class="btn-press text-xs font-bold text-ink bg-paper hover:bg-sand/60 px-3.5 py-2 rounded-xl border border-sand flex items-center gap-1.5">
+                        <i class="fa-solid fa-key text-terracotta"></i>
+                        <span>修改登入密碼</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Student's Competency Volumes (五科分卷作答區) -->
+            <div class="bg-white rounded-2xl border border-sand p-6 shadow-soft">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <h3 class="text-base font-bold text-ink flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-sage"></i>
+                        今日適性分卷任務（依各項能力程度獨立出題）
+                    </h3>
+                    <span class="text-xs text-inklight">若某項目顯示「今日不派卷」，則無需作答</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="stu-domains-grid">
+                    <!-- Injected via JS: Separate Volume Cards -->
+                </div>
+            </div>
+
+            <!-- Recent Practice Logs -->
+            <div class="bg-white rounded-2xl border border-sand p-6 shadow-soft">
+                <h3 class="text-base font-bold text-ink flex items-center gap-2 mb-4">
+                    <i class="fa-solid fa-clock-rotate-left text-slateaccent"></i>
+                    近期分卷作答紀錄
+                </h3>
+                <div id="stu-history-list" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 3: ACTIVE 10-QUESTION QUIZ INTERFACE                 -->
+        <!-- ========================================================= -->
+        <section id="view-quiz" class="hidden max-w-3xl mx-auto space-y-5">
+            <!-- Top Quiz Status & Progress -->
+            <div class="bg-white rounded-2xl border border-sand p-4 sm:p-5 shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span id="quiz-domain-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold border bg-sagelight text-sage border-sage/30">
+                        A-a-1｜白話文・基礎・第1卷
+                    </span>
+                    <span id="quiz-tier-badge" class="px-2.5 py-0.5 rounded-md text-xs font-bold border bg-slate-100 text-slate-700 border-slate-300">
+                        基礎組
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <span id="quiz-progress-text" class="text-xs font-bold text-ink whitespace-nowrap">第 1 / 10 題</span>
+                    <div class="w-full sm:w-36 h-2 bg-paper rounded-full overflow-hidden border border-sand">
+                        <div id="quiz-progress-bar" class="h-full bg-sage transition-all duration-300" style="width: 10%;"></div>
+                    </div>
+                    <button onclick="returnToStudentLobby()" class="text-xs text-inklight hover:text-terracotta font-bold whitespace-nowrap ml-1">
+                        返回列表
+                    </button>
+                </div>
+            </div>
+
+            <!-- Question & Long Reading Passage Card -->
+            <div class="bg-white rounded-2xl border border-sand p-6 sm:p-8 shadow-soft space-y-6">
+                <!-- Optional Long Reading Passage Box -->
+                <div id="quiz-passage-box" class="hidden p-5 rounded-xl bg-paper border border-sand space-y-2">
+                    <div class="flex items-center justify-between text-xs font-bold text-sage">
+                        <span><i class="fa-solid fa-book-open-reader mr-1.5"></i>閱讀文本</span>
+                        <span id="quiz-passage-tag" class="font-mono text-inklight"></span>
+                    </div>
+                    <p id="quiz-passage-text" class="font-serif text-sm sm:text-base leading-relaxed text-ink whitespace-pre-line"></p>
+                </div>
+
+                <!-- Question Stem -->
+                <div>
+                    <h3 id="quiz-question-text" class="text-base sm:text-lg font-serif font-bold text-ink leading-relaxed">
+                        題目載入中...
+                    </h3>
+                </div>
+
+                <!-- 4 Options -->
+                <div id="quiz-options-container" class="space-y-3">
+                    <!-- Injected via JS -->
+                </div>
+
+                <!-- Immediate Explanation & Next Button -->
+                <div id="quiz-feedback-box" class="hidden">
+                    <div class="space-y-1">
+                        <div id="quiz-feedback-title" class="font-bold"></div>
+                        <p id="quiz-feedback-desc" class="text-xs sm:text-sm opacity-90"></p>
+                    </div>
+                    <button onclick="nextQuestion()" id="quiz-next-btn" class="btn-press px-5 py-2.5 rounded-xl bg-ink hover:bg-slate-800 text-white font-bold text-xs sm:text-sm shrink-0">
+                        下一題 <i class="fa-solid fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 4: QUIZ RESULT SUMMARY                               -->
+        <!-- ========================================================= -->
+        <section id="view-quiz-result" class="hidden max-w-xl mx-auto">
+            <div class="bg-white rounded-2xl border border-sand p-8 shadow-soft text-center space-y-6">
+                <div class="w-16 h-16 rounded-2xl bg-sagelight text-sage flex items-center justify-center mx-auto text-3xl">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+
+                <div class="space-y-2">
+                    <span id="result-volume-badge" class="inline-block px-3 py-1 rounded-lg bg-paper border border-sand text-xs font-bold text-ink">
+                        A-a-1 結算報告
+                    </span>
+                    <h2 class="text-2xl font-serif font-bold text-ink">本卷作答完成</h2>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+                    <div class="p-4 rounded-2xl bg-paper border border-sand">
+                        <div class="text-xs font-bold text-inklight">本卷得分</div>
+                        <div class="text-3xl font-black text-sage mt-1"><span id="result-score">90</span> <span class="text-sm font-bold">分</span></div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-paper border border-sand">
+                        <div class="text-xs font-bold text-inklight">答對題數</div>
+                        <div class="text-3xl font-black text-ink mt-1"><span id="result-correct-count">9</span> <span class="text-sm font-bold">/ 10 題</span></div>
+                    </div>
+                </div>
+
+                <p id="result-sync-msg" class="text-xs text-inklight bg-paper px-4 py-2.5 rounded-xl border border-sand">
+                    已記錄於系統數據庫
+                </p>
+
+                <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+                    <button onclick="retryCurrentVolume()" class="btn-press px-5 py-2.5 rounded-xl bg-paper hover:bg-sand/60 text-ink border border-sand text-xs sm:text-sm font-bold">
+                        <i class="fa-solid fa-rotate-right mr-1.5"></i>再練習一次本卷
+                    </button>
+                    <button onclick="returnToStudentLobby()" class="btn-press px-6 py-2.5 rounded-xl bg-sage hover:bg-teal-800 text-white text-xs sm:text-sm font-bold shadow-sm">
+                        返回我的試卷列表
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 5: TEACHER ANALYTICS & VOLUME DISPATCH DASHBOARD     -->
+        <!-- ========================================================= -->
+        <section id="view-teacher-dashboard" class="hidden space-y-6">
+            <!-- Top Filter & Sync Control Bar -->
+            <div id="teacher-filter-bar" class="bg-white rounded-2xl border border-sand p-5 shadow-soft flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h2 class="text-xl font-serif font-bold text-ink">教師數據與適性派卷控制台</h2>
+                        <span id="teacher-selected-date-badge" class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-terralight text-terracotta border border-terracotta/30">
+                            2026/11/19
+                        </span>
+                    </div>
+                    <p class="text-xs text-inklight mt-1">檢視各日期與各試卷代號（如 A-a-1）作答平均，並可依全班能力值批次派發指定回次。</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <div class="flex items-center gap-1.5 bg-paper px-3 py-1.5 rounded-xl border border-sand">
+                        <i class="fa-regular fa-calendar text-sage text-xs"></i>
+                        <select id="filter-date-select" onchange="handleTeacherFilterChange()" class="bg-transparent text-xs font-bold text-ink focus:outline-none cursor-pointer">
+                            <option value="2026/11/19">2026/11/19 (今日)</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 bg-paper px-3 py-1.5 rounded-xl border border-sand">
+                        <i class="fa-solid fa-layer-group text-terracotta text-xs"></i>
+                        <select id="filter-volume-select" onchange="handleTeacherFilterChange()" class="bg-transparent text-xs font-bold text-ink focus:outline-none cursor-pointer">
+                            <option value="all">全部試卷總覽</option>
+                        </select>
+                    </div>
+
+                    <button onclick="syncFromGoogleSheet(false)" class="btn-press px-3.5 py-2 rounded-xl bg-paper hover:bg-sagelight text-sage border border-sand text-xs font-bold flex items-center gap-1.5">
+                        <i id="sync-spin-icon" class="fa-solid fa-arrows-rotate"></i>
+                        <span>同步試算表</span>
+                    </button>
+
+                    <button onclick="exportCSV()" class="btn-press px-3.5 py-2 rounded-xl bg-ink hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <span>匯出報表</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Date-Aware KPI Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white rounded-2xl border border-sand p-5 shadow-soft">
+                    <div id="stat-label-completed" class="text-xs font-bold text-inklight">當日有作答人數</div>
+                    <div class="text-2xl font-black text-ink mt-1.5">
+                        <span id="stat-today-completed">0</span>
+                        <span class="text-xs font-bold text-inklight">/ <span id="stat-total-students">5</span> 人</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-sand p-5 shadow-soft">
+                    <div id="stat-label-avg" class="text-xs font-bold text-inklight">當日全班總平均</div>
+                    <div id="stat-today-avg" class="text-2xl font-black text-sage mt-1.5">--</div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-sand p-5 shadow-soft sm:col-span-2 lg:col-span-1">
+                    <div class="text-xs font-bold text-inklight">當日各科分卷平均</div>
+                    <div id="stat-domain-avgs" class="text-[11px] font-bold text-ink mt-1.5 space-y-0.5 leading-relaxed">
+                        <div>白話(A)：-- ｜ 字音(B)：-- ｜ 文言(C)：--</div>
+                        <div>課文(D)：-- ｜ 國學(E)：--</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-sand p-5 shadow-soft">
+                    <div class="text-xs font-bold text-inklight">試算表雲端題庫總數</div>
+                    <div class="text-2xl font-black text-terracotta mt-1.5">
+                        <span id="stat-sheet-qcount">21</span> <span class="text-xs font-bold text-inklight">題（永久保存）</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub-Navigation Tabs -->
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="switchTeacherTab('daily')" id="ttab-daily" class="px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-ink text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-table-list"></i> 每日分卷成績與今日派卷
+                </button>
+                <button onclick="switchTeacherTab('competency')" id="ttab-competency" class="px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-inklight hover:text-ink border border-sand transition flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> 學生五向度能力值檔案（永久保存）
+                </button>
+                <button onclick="switchTeacherTab('logs')" id="ttab-logs" class="px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-inklight hover:text-ink border border-sand transition flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left"></i> 逐題作答明細紀錄
+                </button>
+                <button onclick="switchTeacherTab('sheet-preview')" id="ttab-sheet-preview" class="px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-inklight hover:text-ink border border-sand transition flex items-center gap-2">
+                    <i class="fa-solid fa-book-open"></i> 題庫試卷總覽
+                </button>
+            </div>
+
+            <!-- PANEL 1: DAILY SCORES & VOLUME DISPATCH -->
+            <div id="teacher-panel-daily" class="space-y-5">
+                <!-- Batch Dispatch by Competency & Volume Round -->
+                <div class="bg-white rounded-2xl border border-sand p-5 shadow-soft space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm sm:text-base font-serif font-bold text-ink flex items-center gap-2">
+                                <i class="fa-solid fa-wand-magic-sparkles text-terracotta"></i>
+                                依全班能力值・批次派發指定回次（如第 1 卷、第 2 卷）
+                            </h3>
+                            <p class="text-xs text-inklight mt-0.5">勾選今日要考的項目與卷別回次，系統會自動依每位學生的永久能力值（a基礎 / b進階 / c精熟）配發對應試卷。</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-4 pt-1">
+                        <!-- Domain Checkboxes -->
+                        <div id="batch-domain-checkboxes" class="flex flex-wrap items-center gap-2.5">
+                            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-paper border border-sand text-xs font-bold text-ink cursor-pointer">
+                                <input type="checkbox" value="vernacular" checked class="accent-sage"> A 白話文閱讀
+                            </label>
+                            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-paper border border-sand text-xs font-bold text-ink cursor-pointer">
+                                <input type="checkbox" value="phonetics" class="accent-sage"> B 國字注音
+                            </label>
+                            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-paper border border-sand text-xs font-bold text-ink cursor-pointer">
+                                <input type="checkbox" value="classical" class="accent-sage"> C 文言文閱讀
+                            </label>
+                            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-paper border border-sand text-xs font-bold text-ink cursor-pointer">
+                                <input type="checkbox" value="lesson" class="accent-sage"> D 課文理解
+                            </label>
+                            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-paper border border-sand text-xs font-bold text-ink cursor-pointer">
+                                <input type="checkbox" value="sinology" class="accent-sage"> E 國學常識
+                            </label>
+                        </div>
+
+                        <!-- Round & Mode Selectors -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select id="batch-round-select" class="px-3 py-2 rounded-xl bg-paper border border-sand text-xs font-bold text-ink focus:outline-none">
+                                <option value="1">第 1 卷 (-1)</option>
+                                <option value="2">第 2 卷 (-2)</option>
+                            </select>
+
+                            <select id="batch-mode-select" class="px-3 py-2 rounded-xl bg-paper border border-sand text-xs font-bold text-ink focus:outline-none">
+                                <option value="replace">覆蓋為今日派卷</option>
+                                <option value="append">累加至現有派卷</option>
+                            </select>
+
+                            <button onclick="executeBatchCompetencyDispatch()" class="btn-press px-4 py-2 rounded-xl bg-sage hover:bg-teal-800 text-white text-xs font-bold shadow-sm flex items-center gap-1.5">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>依能力值批次派發</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Daily Table -->
+                <div class="bg-white rounded-2xl border border-sand shadow-soft overflow-hidden">
+                    <div class="p-4 sm:p-5 border-b border-sand flex flex-wrap items-center justify-between gap-2">
+                        <h3 id="daily-table-title" class="text-sm sm:text-base font-bold text-ink">
+                            2026/11/19 ｜ 各學生作答成績 ＆ 指定試卷代號管理
+                        </h3>
+                        <span class="text-xs text-inklight">下方每位學生皆可使用「三段式逐步點選」個別增減指定試卷</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead id="teacher-daily-thead"></thead>
+                            <tbody id="teacher-daily-tbody" class="divide-y divide-sand text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 2: PERMANENT 5-DOMAIN COMPETENCY PROFILE -->
+            <div id="teacher-panel-competency" class="hidden bg-white rounded-2xl border border-sand shadow-soft overflow-hidden">
+                <div class="p-5 border-b border-sand flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-base font-serif font-bold text-ink">學生五向度能力值檔案（永久保存，不因停派而遺失）</h3>
+                        <p class="text-xs text-inklight mt-0.5">調整此處組別會同步更新 Google 試算表的能力紀錄，並作為批次派卷的自動配對依據。</p>
+                    </div>
+                    <button onclick="dispatchAllByCompetency()" class="btn-press px-4 py-2 rounded-xl bg-terracotta hover:bg-orange-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-wand-sparkles"></i>
+                        <span>全班依能力值派發各科第 1 卷</span>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-sand bg-paper text-[11px] font-bold text-inklight uppercase tracking-wider">
+                                <th class="py-3.5 px-4">學號 / 姓名</th>
+                                <th class="py-3.5 px-3">A 白話文閱讀</th>
+                                <th class="py-3.5 px-3">B 國字注音</th>
+                                <th class="py-3.5 px-3">C 文言文閱讀</th>
+                                <th class="py-3.5 px-3">D 課文理解</th>
+                                <th class="py-3.5 px-3">E 國學常識</th>
+                                <th class="py-3.5 px-4 text-right">能力分布統計</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacher-competency-tbody" class="divide-y divide-sand text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANEL 3: DETAILED QUIZ LOGS -->
+            <div id="teacher-panel-logs" class="hidden bg-white rounded-2xl border border-sand shadow-soft overflow-hidden">
+                <div class="p-5 border-b border-sand flex items-center justify-between">
+                    <h3 class="text-base font-bold text-ink">逐題作答明細紀錄</h3>
+                    <span id="logs-count-badge" class="px-2.5 py-1 rounded-lg bg-paper border border-sand text-xs font-bold text-inklight">共 0 筆紀錄</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-sand bg-paper text-[11px] font-bold text-inklight uppercase tracking-wider">
+                                <th class="py-3 px-4">交卷時間</th>
+                                <th class="py-3 px-3">學生</th>
+                                <th class="py-3 px-3">試卷代號與名稱</th>
+                                <th class="py-3 px-3">難度組別</th>
+                                <th class="py-3 px-3">得分</th>
+                                <th class="py-3 px-4">逐題對錯明細</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacher-logs-tbody" class="divide-y divide-sand text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANEL 4: QUESTION BANK PREVIEW -->
+            <div id="teacher-panel-sheet-preview" class="hidden bg-white rounded-2xl border border-sand p-5 shadow-soft space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-base font-serif font-bold text-ink">Google 試算表題庫總覽（唯讀檢視）</h3>
+                        <p class="text-xs text-inklight mt-0.5">題庫永久保存於您的試算表中，學生練習後不會刪除任何題目。</p>
+                    </div>
+                    <select id="filter-sheet-domain" onchange="renderSheetQuestionsPreview()" class="px-3.5 py-2 rounded-xl bg-paper border border-sand text-xs font-bold text-ink focus:outline-none">
+                        <option value="all">全部試卷題庫</option>
+                    </select>
+                </div>
+                <div id="sheet-questions-list" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ========================================================= -->
+    <!-- STUDENT CHANGE PASSWORD MODAL (學號固定・學生自訂密碼)     -->
+    <!-- ========================================================= -->
+    <div id="modal-change-password" class="hidden fixed inset-0 z-50 bg-ink/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl border border-sand shadow-xl max-w-md w-full overflow-hidden">
+            <div class="p-5 bg-paper border-b border-sand flex items-center justify-between">
+                <h3 class="text-base font-serif font-bold text-ink flex items-center gap-2">
+                    <i class="fa-solid fa-key text-terracotta"></i>
+                    修改個人登入密碼
+                </h3>
+                <button onclick="closeChangePasswordModal()" class="w-8 h-8 rounded-lg hover:bg-sand/50 text-inklight flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleStudentPasswordChange(event)" class="p-6 space-y-4">
+                <div class="p-3 rounded-xl bg-slatelight/70 border border-slate-200 flex items-center justify-between text-xs">
+                    <span class="font-bold text-inklight">固定登入學號（不可更改）：</span>
+                    <span id="pwd-modal-stuid" class="font-mono font-black text-sm text-ink">80101</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-ink mb-1.5">目前密碼</label>
+                    <input type="password" id="pwd-current-input" required placeholder="請輸入目前的密碼" class="w-full px-3.5 py-2.5 rounded-xl bg-paper border border-sand focus:border-sage focus:bg-white focus:outline-none text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-ink mb-1.5">設定新密碼（至少 4 碼英數字）</label>
+                    <input type="password" id="pwd-new-input" required minlength="4" placeholder="請輸入新密碼" class="w-full px-3.5 py-2.5 rounded-xl bg-paper border border-sand focus:border-sage focus:bg-white focus:outline-none text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-ink mb-1.5">再次確認新密碼</label>
+                    <input type="password" id="pwd-confirm-input" required minlength="4" placeholder="請再輸入一次新密碼" class="w-full px-3.5 py-2.5 rounded-xl bg-paper border border-sand focus:border-sage focus:bg-white focus:outline-none text-sm">
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2.5">
+                    <button type="button" onclick="closeChangePasswordModal()" class="px-4 py-2.5 rounded-xl bg-paper hover:bg-sand/50 text-ink border border-sand text-xs font-bold">
+                        取消
+                    </button>
+                    <button type="submit" class="btn-press px-5 py-2.5 rounded-xl bg-sage hover:bg-teal-800 text-white text-xs font-bold shadow-sm">
+                        儲存新密碼
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- TOAST NOTIFICATION                                        -->
+    <!-- ========================================================= -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ========================================================= -->
+    <!-- APPLICATION LOGIC (JavaScript)                            -->
+    <!-- ========================================================= -->
+    <script>
+        // =========================================================
+        // 【教師一次性設定區】請將部署好的 Google Apps Script 網址貼在下方引號內
+        // =========================================================
+        const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzk8VEcw6Rgr2tGrabk2SAf79iNPKbHLZrubbXHf3rQF4sGtp5pK6pCokjd2j94TB3ANg/exec";
+
+        // 【教師帳號設定區】可在此自訂多組教師登入帳密
+        const TEACHER_ACCOUNTS = [
+            { user: "teacher", pass: "1234", name: "國文科教師" }
+        ];
+
+        // ---------------------------------------------------------
+        // 2. VOLUME CODE PARSER (A-a-1 = 白話-基礎-第1卷) & METADATA
+        // ---------------------------------------------------------
+        const CODE_TO_DOMAIN = { A: 'vernacular', B: 'phonetics', C: 'classical', D: 'lesson', E: 'sinology' };
+        const DOMAIN_TO_CODE = { vernacular: 'A', phonetics: 'B', classical: 'C', lesson: 'D', sinology: 'E' };
+        const CODE_TO_TIER = { a: 'basic', b: 'intermediate', c: 'advanced' };
+        const TIER_TO_CODE = { basic: 'a', intermediate: 'b', advanced: 'c' };
+
+        const DOMAINS = {
+            vernacular: {
+                key: 'vernacular',
+                code: 'A',
+                label: '白話文閱讀能力',
+                volumeTitle: '白話文閱讀卷',
+                short: '白話文',
+                icon: 'fa-book-open',
+                badgeClass: 'bg-sagelight text-sage border-sage/30'
+            },
+            phonetics: {
+                key: 'phonetics',
+                code: 'B',
+                label: '國字注音能力',
+                volumeTitle: '國字注音卷',
+                short: '國字注音',
+                icon: 'fa-spell-check',
+                badgeClass: 'bg-ochrelight text-ochre border-ochre/30'
+            },
+            classical: {
+                key: 'classical',
+                code: 'C',
+                label: '文言文閱讀能力',
+                volumeTitle: '文言文閱讀卷',
+                short: '文言文',
+                icon: 'fa-scroll',
+                badgeClass: 'bg-terralight text-terracotta border-terracotta/30'
+            },
+            lesson: {
+                key: 'lesson',
+                code: 'D',
+                label: '課文理解能力',
+                volumeTitle: '課文理解卷',
+                short: '課文理解',
+                icon: 'fa-book-bookmark',
+                badgeClass: 'bg-slatelight text-slateaccent border-slateaccent/30'
+            },
+            sinology: {
+                key: 'sinology',
+                code: 'E',
+                label: '國學常識能力',
+                volumeTitle: '國學常識卷',
+                short: '國學常識',
+                icon: 'fa-landmark',
+                badgeClass: 'bg-plumlight text-plum border-plum/30'
+            }
+        };
+
+        const TIERS = {
+            basic: { label: '基礎組', short: '基礎', code: 'a', desc: '鞏固課內核心概念', pillClass: 'bg-slate-100 text-slate-700 border-slate-300' },
+            intermediate: { label: '進階組', short: '進階', code: 'b', desc: '強化文意推論與辨析', pillClass: 'bg-sagelight text-sage border-sage/40' },
+            advanced: { label: '精熟組', short: '精熟', code: 'c', desc: '會考素養與深層賞析', pillClass: 'bg-terralight text-terracotta border-terracotta/40' },
+            none: { label: '今日不派卷', short: '不派卷', code: '-', desc: '教師設定今日無需測驗', pillClass: 'bg-paper text-inklight border-sand' }
+        };
+
+        // Parse structured volume codes like "A-a-1" -> { setId: 'A-a-1', domain: 'vernacular', tier: 'basic', volumeNum: '1', fullTitle: '白話文閱讀・基礎・第1卷' }
+        function parseVolumeCode(setId, fallbackDomain = 'vernacular', fallbackTier = 'basic') {
+            const cleanId = String(setId || '').trim();
+            const match = cleanId.match(/^([A-Ea-e])-([a-cA-C])-(\d+)$/);
+            if (match) {
+                const dKey = CODE_TO_DOMAIN[match[1].toUpperCase()] || fallbackDomain;
+                const tKey = CODE_TO_TIER[match[2].toLowerCase()] || fallbackTier;
+                const num = match[3];
+                const dMeta = DOMAINS[dKey];
+                const tMeta = TIERS[tKey];
+                return {
+                    setId: `${match[1].toUpperCase()}-${match[2].toLowerCase()}-${num}`,
+                    domain: dKey,
+                    tier: tKey,
+                    volumeNum: num,
+                    shortTitle: `${dMeta.short}・${tMeta.short}・第${num}卷`,
+                    fullTitle: `${dMeta.short}（${tMeta.label}）第 ${num} 卷`
+                };
+            }
+            // Fallback for custom set names (e.g. "八上第一課")
+            const sampleQ = questionsDB.find(q => q.setId === cleanId);
+            const dKey = sampleQ ? sampleQ.domain : fallbackDomain;
+            const tKey = sampleQ ? sampleQ.tier : fallbackTier;
+            const dMeta = DOMAINS[dKey] || DOMAINS.vernacular;
+            const tMeta = TIERS[tKey] || TIERS.basic;
+            return {
+                setId: cleanId || `${DOMAINS[dKey].code}-${TIERS[tKey].code}-1`,
+                domain: dKey,
+                tier: tKey,
+                volumeNum: '1',
+                shortTitle: cleanId || `${dMeta.short}・${tMeta.short}`,
+                fullTitle: cleanId ? `${cleanId}（${dMeta.short}・${tMeta.short}）` : `${dMeta.short}（${tMeta.label}）`
+            };
+        }
+
+        // Build catalog of all available volume codes currently in questionsDB
+        function getAvailableVolumeCatalog() {
+            const map = new Map();
+            questionsDB.forEach(q => {
+                const code = q.setId && q.setId.trim() !== ''
+                    ? q.setId.trim()
+                    : `${DOMAIN_TO_CODE[q.domain] || 'A'}-${TIER_TO_CODE[q.tier] || 'a'}-1`;
+                if (!map.has(code)) {
+                    const parsed = parseVolumeCode(code, q.domain, q.tier);
+                    map.set(code, { ...parsed, count: 0 });
+                }
+                map.get(code).count++;
+            });
+            return Array.from(map.values()).sort((a, b) => a.setId.localeCompare(b.setId));
+        }
+
+        const TODAY_STR = '2026/11/19';
+
+        // Junior High Students Roster:
+        // `levels` = Permanent 5-domain competency profile (NEVER lost when no exam is assigned!)
+        // `assignedSets` = Specific named volume codes assigned to this student right now (e.g. ['A-b-1', 'D-b-1'])
+        let studentsDB = [
+            {
+                id: '80101',
+                name: '林宇軒',
+                bday: '0512',
+                levels: { vernacular: 'intermediate', phonetics: 'basic', classical: 'basic', lesson: 'intermediate', sinology: 'basic' },
+                assignedSets: ['A-b-1', 'D-b-1']
+            },
+            {
+                id: '80102',
+                name: '陳宥希',
+                bday: '0823',
+                levels: { vernacular: 'advanced', phonetics: 'intermediate', classical: 'intermediate', lesson: 'advanced', sinology: 'intermediate' },
+                assignedSets: ['A-c-1', 'B-b-1', 'E-b-1']
+            },
+            {
+                id: '80103',
+                name: '張子晴',
+                bday: '1104',
+                levels: { vernacular: 'advanced', phonetics: 'advanced', classical: 'advanced', lesson: 'advanced', sinology: 'advanced' },
+                assignedSets: ['A-c-1', 'C-c-1']
+            },
+            {
+                id: '80104',
+                name: '王柏翔',
+                bday: '0219',
+                levels: { vernacular: 'basic', phonetics: 'basic', classical: 'basic', lesson: 'basic', sinology: 'basic' },
+                assignedSets: ['A-a-1', 'A-a-2']
+            },
+            {
+                id: '80105',
+                name: '李品妍',
+                bday: '0730',
+                levels: { vernacular: 'intermediate', phonetics: 'advanced', classical: 'basic', lesson: 'intermediate', sinology: 'intermediate' },
+                assignedSets: [] // Example: Teacher did NOT assign any test today, yet her `levels` remain intact!
+            }
+        ];
+
+        // Helper to normalize student records synced from Google Sheet
+        function normalizeStudentRecord(stu) {
+            const domainKeys = Object.keys(DOMAINS);
+            if (!stu.levels) stu.levels = {};
+            domainKeys.forEach(k => {
+                if (!stu.levels[k]) stu.levels[k] = 'basic';
+            });
+            if (!Array.isArray(stu.assignedSets)) {
+                if (typeof stu.assignedSets === 'string') {
+                    stu.assignedSets = stu.assignedSets.split(',').map(s => s.trim()).filter(Boolean);
+                } else {
+                    stu.assignedSets = [];
+                }
+            }
+            return stu;
+        }
+        studentsDB.forEach(normalizeStudentRecord);
+
+        // Built-in Junior High Question Bank with Multiple Named Volumes (A-a-1, A-a-2, A-b-1, A-c-1, B-a-1, etc.)
+        let questionsDB = [
+            // --- A-a-1：白話文閱讀・基礎・第1卷 ---
+            {
+                id: 'Q001', domain: 'vernacular', tier: 'basic', setId: 'A-a-1',
+                passage: '　　老茶師製茶從不看時鐘，他看的是茶菁葉緣捲曲的弧度，與指尖觸摸時傳來的微溫。\n　　「機器烘茶講求精準的溫度與秒數，卻讀不懂每一季雨水的脾氣。」老師傅撥開竹篩上微微發酵的茶葉，淡淡的清香隨風散開，「春茶水氣足，焙火要文；冬茶葉肉厚，火候得穩。茶跟人一樣，順著它的性子去引導，它才會把最甘甜的滋味留給你。」',
+                text: '根據本文，老師傅堅持不完全依賴機器製茶的主要原因為何？',
+                options: ['機器設備價格太過昂貴', '機器無法因應不同季節茶葉的特性與水氣變化靈活調整火候', '手工製茶的速度比機器更快', '年輕一輩不願意學習操作機器'],
+                answer: 1,
+                explanation: '老師傅提到「機器讀不懂每一季雨水的脾氣」，強調需依春茶、冬茶的不同特性靈活調整火候。',
+                assignedTo: []
+            },
+            {
+                id: 'Q002', domain: 'vernacular', tier: 'basic', setId: 'A-a-1',
+                passage: '　　老茶師製茶從不看時鐘，他看的是茶菁葉緣捲曲的弧度，與指尖觸摸時傳來的微溫。\n　　「機器烘茶講求精準的溫度與秒數，卻讀不懂每一季雨水的脾氣。」老師傅撥開竹篩上微微發酵的茶葉，淡淡的清香隨風散開，「春茶水氣足，焙火要文；冬茶葉肉厚，火候得穩。茶跟人一樣，順著它的性子去引導，它才會把最甘甜的滋味留給你。」',
+                text: '文末「順著它的性子去引導，它才會把最甘甜的滋味留給你」蘊含了什麼處世道理？',
+                options: ['凡事應該嚴格控制，不容許任何偏差', '對待萬物或與人相處，應尊重其特質並因勢利導，才能獲得美好回應', '只有經驗老到的人才能喝出好茶的滋味', '傳統工藝終究會被現代科技取代'],
+                answer: 1,
+                explanation: '作者由製茶之道延伸至待人處世，強調順應特質、耐心引導的重要性。',
+                assignedTo: []
+            },
+            // --- A-a-2：白話文閱讀・基礎・第2卷 ---
+            {
+                id: 'Q003', domain: 'vernacular', tier: 'basic', setId: 'A-a-2',
+                passage: '　　巷口那家修鞋鋪沒有招牌，只在木門旁掛了一只褪色的鐵皮信箱。老鞋匠戴著老花眼鏡，總先把客人送來的舊皮鞋擦拭乾淨，再細細端詳磨損的鞋跟。\n　　「一雙好鞋陪人走過多少路，鞋底的紋路最誠實。」老鞋匠一邊敲打鞋釘一邊說，「補鞋不只是把破洞填滿，而是讓走路的人重新找回踏實的重心。」',
+                text: '老鞋匠在動手修補前先將舊鞋擦拭乾淨並端詳鞋跟，展現了他什麼樣的工作態度？',
+                options: ['嫌棄客人的鞋子太髒', '對專業的敬重與細心觀察問題根源的職人精神', '想藉此拖延時間多收費用', '只願意修理昂貴的名牌皮鞋'],
+                answer: 1,
+                explanation: '老鞋匠透過觀察鞋底磨損找出走路重心偏移的原因，展現細膩敬業的職人態度。',
+                assignedTo: []
+            },
+            // --- A-b-1：白話文閱讀・進階・第1卷 ---
+            { id: 'Q004', domain: 'vernacular', tier: 'intermediate', setId: 'A-b-1', passage: '', text: '「真正的傾聽，並不是急著在對方話音剛落時給出建議，而是願意騰出一段安靜的空間，讓對方的情緒得以安放。」這段話最強調溝通中的哪一項態度？', options: ['迅速幫對方解決所有難題', '給予陪伴與同理的包容空間', '保持沉默以避免承擔責任', '用邏輯分析對方的錯誤'], answer: 1, explanation: '句中「騰出安靜空間、讓情緒得以安放」強調的是同理與陪伴，而非急於指導。', assignedTo: [] },
+            { id: 'Q005', domain: 'vernacular', tier: 'intermediate', setId: 'A-b-1', passage: '', text: '下列哪一個句子最能體現「逆境反而能淬鍊出人的韌性」？', options: ['順風順水的航行最能抵達遠方', '未經寒徹骨，焉得梅花撲鼻香', '溫室裡的花朵總是開得最鮮豔', '聰明的人懂得避開所有困難'], answer: 1, explanation: '「未經寒徹骨，焉得梅花撲鼻香」以梅花歷經嚴寒而綻放芬芳，比喻人歷經磨難方能成就。', assignedTo: [] },
+            // --- A-c-1：白話文閱讀・精熟・第1卷 ---
+            { id: 'Q006', domain: 'vernacular', tier: 'advanced', setId: 'A-c-1', passage: '', text: '「城市裡的高樓越蓋越高，人與人之間的窗戶卻越關越緊；我們在螢幕上擁有成千上萬的朋友，轉過身卻連鄰居的姓氏都叫不出來。」作者透過這段文字主要想表達什麼？', options: ['讚美現代建築技術的進步', '批評社群媒體完全沒有任何好處', '省思現代科技發達下，人際關係卻日趨疏離冷漠的矛盾現象', '呼籲大家搬離都市回到鄉村居住'], answer: 2, explanation: '透過「高樓高／窗戶緊」、「螢幕朋友多／不識鄰居」的強烈對比，點出現代人際疏離的現象。', assignedTo: [] },
+
+            // --- B-a-1 & B-b-1 & B-c-1：國字注音 ---
+            { id: 'Q007', domain: 'phonetics', tier: 'basic', setId: 'B-a-1', passage: '', text: '下列選項「 」中的字音，何者讀音完全相同？', options: ['「模」範／「模」樣', '「供」應／「供」奉', '「載」重／記「載」', '「參」加／「參」差'], answer: 2, explanation: '(C)皆讀作 ㄗㄞˋ。(A)ㄇㄛˊ／ㄇㄨˊ；(B)ㄍㄨㄥ／ㄍㄨㄥˋ；(D)ㄘㄢ／ㄘㄣ。', assignedTo: [] },
+            { id: 'Q008', domain: 'phonetics', tier: 'basic', setId: 'B-a-1', passage: '', text: '下列詞語中，哪一組完全「沒有」錯別字？', options: ['再接再勵', '迫不急待', '按部就班', '默不關心'], answer: 2, explanation: '(C)正確。(A)再接再「厲」；(B)迫不「及」待；(D)「漠」不關心。', assignedTo: [] },
+            { id: 'Q009', domain: 'phonetics', tier: 'intermediate', setId: 'B-b-1', passage: '', text: '「這座古剎歷經數百年風霜，殿內的壁畫已有些斑駁。」句中「剎」與「駁」的讀音依序為何？', options: ['ㄕㄚˋ ／ ㄅㄛˊ', 'ㄔㄚˋ ／ ㄅㄛˊ', 'ㄕㄚ ／ ㄅㄛˇ', 'ㄔㄚˋ ／ ㄅㄛˇ'], answer: 1, explanation: '古「剎」讀作 ㄔㄚˋ（指佛寺）；斑「駁」讀作 ㄅㄛˊ。', assignedTo: [] },
+            { id: 'Q010', domain: 'phonetics', tier: 'advanced', setId: 'B-c-1', passage: '', text: '下列各組「 」中的字音，何者兩兩相同？', options: ['「裨」補闕漏 ／ 偏「裨」將軍', '「載」歌載舞 ／ 怨聲「載」道', '「強」詞奪理 ／ 博聞「強」記', '「數」見不鮮 ／ 歷「數」家珍'], answer: 1, explanation: '(B)皆讀作 ㄗㄞˋ。(A)ㄅㄧˋ／ㄆㄧˊ；(C)ㄑㄧㄤˇ／ㄑㄧㄤˊ；(D)ㄕㄨㄛˋ／ㄕㄨˇ。', assignedTo: [] },
+
+            // --- C-a-1 & C-b-1 & C-c-1：文言文閱讀 ---
+            { id: 'Q011', domain: 'classical', tier: 'basic', setId: 'C-a-1', passage: '', text: '「學而時習之，不亦說乎？」句中的「說」字，通假為下列哪一個字？', options: ['說話的「說」', '喜悅的「悅」', '脫落的「脫」', '閱覽的「閱」'], answer: 1, explanation: '「說」在此為通假字，通「悅」，喜悅、愉快的意思。', assignedTo: [] },
+            { id: 'Q012', domain: 'classical', tier: 'basic', setId: 'C-a-1', passage: '', text: '「擇其善者而從之，其不善者而改之。」這句話主要勉勵我們抱持何種學習態度？', options: ['只跟比自己優秀的人做朋友', '見賢思齊，見不賢而內自省', '批評別人的缺點以顯示自己高明', '凡事順從他人的意見'], answer: 1, explanation: '選擇別人的優點學習，看到別人的缺點則自我省察改正。', assignedTo: [] },
+            {
+                id: 'Q013', domain: 'classical', tier: 'intermediate', setId: 'C-b-1',
+                passage: '　　曾子之妻之市，其子隨之而泣。其母曰：「女還，顧反為女殺彘。」適市來，曾子欲捕彘殺之。妻止之曰：「特與嬰兒戲耳。」曾子曰：「嬰兒非與戲也。嬰兒非有知也，待父母而學者也，聽父母之教。今子欺之，是教子欺也。母欺子，子而不信其母，非所以成教也。」遂烹彘也。',
+                text: '「曾子之妻之市」句中，兩個「之」字的詞性與意義依序為何？',
+                options: ['皆為代詞，指兒子', '皆為動詞，往、去的意思', '前者為助詞「的」，後者為動詞「往、去」', '前者為動詞「往、去」，後者為助詞「的」'],
+                answer: 2,
+                explanation: '曾子之（的，助詞）妻之（往、去，動詞）市（市場）。',
+                assignedTo: []
+            },
+            {
+                id: 'Q014', domain: 'classical', tier: 'intermediate', setId: 'C-b-1',
+                passage: '　　曾子之妻之市，其子隨之而泣。其母曰：「女還，顧反為女殺彘。」適市來，曾子欲捕彘殺之。妻止之曰：「特與嬰兒戲耳。」曾子曰：「嬰兒非與戲也。嬰兒非有知也，待父母而學者也，聽父母之教。今子欺之，是教子欺也。母欺子，子而不信其母，非所以成教也。」遂烹彘也。',
+                text: '曾子最後堅持「遂烹彘也」的主要原因為何？',
+                options: ['家裡剛好缺乏肉類食物', '認為父母必須言而有信，不能欺騙孩子，以免身教失當', '想懲罰妻子隨便亂開玩笑', '孩子哭鬧不休讓他感到心煩'],
+                answer: 1,
+                explanation: '曾子認為孩子會模仿父母的言行，若父母欺騙孩子，便是在教導孩子說謊，故堅持守信烹豬。',
+                assignedTo: []
+            },
+            { id: 'Q015', domain: 'classical', tier: 'advanced', setId: 'C-c-1', passage: '', text: '「不以物喜，不以己悲」這句名言運用了「互文」修辭，其完整正確的句意解釋為何？', options: ['不因為外物的好壞而高興，也不因為自己的得失而悲傷', '不因為外物的好壞和自己的得失而感到高興或悲傷', '不喜歡物質享受，也不為自己感到悲哀', '只有在獲得外物時才高興，失去時才悲傷'], answer: 1, explanation: '互文見義，上下句文意互相補充，意即「不因外在環境順逆或個人得失而動搖喜悲」。', assignedTo: [] },
+
+            // --- D-a-1 & D-b-1 & D-c-1：課文理解 ---
+            { id: 'Q016', domain: 'lesson', tier: 'basic', setId: 'D-a-1', passage: '', text: '朱自清《背影》一文中，作者一共描寫了幾次父親的背影，其中最令作者感動落淚的是哪一幕？', options: ['父親在車站與腳夫講價時的背影', '父親穿過鐵道、攀爬月台買橘子時的背影', '父親坐在車廂裡喝茶時的背影', '父親在家中寫信給兒子時的背影'], answer: 1, explanation: '《背影》共四寫背影，其中「望父買橘」攀爬月台的背影最刻骨銘心，展現深沉父愛。', assignedTo: [] },
+            { id: 'Q017', domain: 'lesson', tier: 'intermediate', setId: 'D-b-1', passage: '', text: '《木蘭詩》：「雄兔腳撲朔，雌兔眼迷離；雙兔傍地走，安能辨我是雄雌？」木蘭以此比喻什麼？', options: ['軍營裡的兔子跑得非常快', '自己在軍中女扮男裝十二年卻未被同伴識破的得意與自豪', '戰爭結束後想要回家飼養兔子', '男女生在戰場上的體力完全相同'], answer: 1, explanation: '以雙兔並跑難辨雌雄，巧妙比喻自己女扮男裝從軍多年卻無人察覺。', assignedTo: [] },
+            { id: 'Q018', domain: 'lesson', tier: 'advanced', setId: 'D-c-1', passage: '', text: '張釋之《張釋之執法》中，面對漢文帝想誅殺驚馬犯人，張釋之堅持僅處罰金，其核心論點為何？', options: ['犯人是皇親國戚，不能判重刑', '法律一旦制定便須天下共守，若隨君王喜怒輕重其罪，將使百姓無所適從', '漢文帝當時心情不好，過幾天就會忘記', '驚馬並未造成任何人員受傷'], answer: 1, explanation: '「法者，天子所與天下公共也」，強調司法公正與法律的穩定性、公信力。', assignedTo: [] },
+
+            // --- E-a-1 & E-b-1 & E-c-1：國學常識 ---
+            { id: 'Q019', domain: 'sinology', tier: 'basic', setId: 'E-a-1', passage: '', text: '下列關於《論語》一書的敘述，何者正確？', options: ['由孔子親自撰寫完成', '記錄孔子及其弟子的言行，屬於語錄體', '是道家學派最重要的經典', '全書共有五言絕句三百首'], answer: 1, explanation: '《論語》為孔子弟子及再傳弟子所輯錄，記錄孔子與弟子言行，為儒家重要經典。', assignedTo: [] },
+            { id: 'Q020', domain: 'sinology', tier: 'intermediate', setId: 'E-b-1', passage: '', text: '下列哪一位作家與其稱號的配對「錯誤」？', options: ['李白 —— 詩仙', '杜甫 —— 詩聖', '王維 —— 詩佛', '白居易 —— 詩鬼'], answer: 3, explanation: '白居易有「詩王」、「詩魔」之稱；「詩鬼」指的是中唐詩人李賀。', assignedTo: [] },
+            { id: 'Q021', domain: 'sinology', tier: 'advanced', setId: 'E-c-1', passage: '', text: '下列關於中國古代重要史書體例的配對，何者完全正確？', options: ['《史記》—— 紀傳體通史', '《資治通鑑》—— 紀傳體斷代史', '《漢書》—— 編年體通史', '《左傳》—— 國別體史書'], answer: 0, explanation: '(A)《史記》為紀傳體通史；(B)《資治通鑑》為編年體通史；(C)《漢書》為紀傳體斷代史；(D)《左傳》為編年體。', assignedTo: [] }
+        ];
+
+        // Per-Volume Quiz Logs (Includes `setId` so teachers can track A-a-1, A-b-1, etc.)
+        let quizLogsDB = [
+            {
+                date: '2026/11/19',
+                time: '08:15',
+                studentId: '80101',
+                studentName: '林宇軒',
+                setId: 'A-b-1',
+                domain: 'vernacular',
+                tier: 'intermediate',
+                score: 90,
+                correctCount: 9,
+                totalQuestions: 10,
+                details: 'Q004(O), Q005(O)...'
+            },
+            {
+                date: '2026/11/19',
+                time: '08:28',
+                studentId: '80101',
+                studentName: '林宇軒',
+                setId: 'D-b-1',
+                domain: 'lesson',
+                tier: 'intermediate',
+                score: 80,
+                correctCount: 8,
+                totalQuestions: 10,
+                details: 'Q017(O)...'
+            },
+            {
+                date: '2026/11/19',
+                time: '08:22',
+                studentId: '80102',
+                studentName: '陳宥希',
+                setId: 'A-c-1',
+                domain: 'vernacular',
+                tier: 'advanced',
+                score: 90,
+                correctCount: 9,
+                totalQuestions: 10,
+                details: 'Q006(O)...'
+            },
+            {
+                date: '2026/11/19',
+                time: '08:35',
+                studentId: '80102',
+                studentName: '陳宥希',
+                setId: 'E-b-1',
+                domain: 'sinology',
+                tier: 'intermediate',
+                score: 80,
+                correctCount: 8,
+                totalQuestions: 10,
+                details: 'Q020(O)...'
+            },
+            {
+                date: '2026/11/19',
+                time: '12:40',
+                studentId: '80103',
+                studentName: '張子晴',
+                setId: 'C-c-1',
+                domain: 'classical',
+                tier: 'advanced',
+                score: 90,
+                correctCount: 9,
+                totalQuestions: 10,
+                details: 'Q015(O)...'
+            },
+            {
+                date: '2026/11/18',
+                time: '16:10',
+                studentId: '80104',
+                studentName: '王柏翔',
+                setId: 'A-a-1',
+                domain: 'vernacular',
+                tier: 'basic',
+                score: 70,
+                correctCount: 7,
+                totalQuestions: 10,
+                details: 'Q001(O), Q002(X)...'
+            }
+        ];
+
+        // App Session State
+        let currentUser = null;
+
+        // Active Single-Volume Quiz State
+        let activeQuiz = {
+            setId: 'A-a-1',
+            domain: 'vernacular',
+            tier: 'basic',
+            questions: [],
+            currentIndex: 0,
+            correctCount: 0,
+            answeredCurrent: false,
+            records: []
+        };
+
+        // Automatically sync from Google Sheet on load if URL is configured
+        window.addEventListener('DOMContentLoaded', () => {
+            if (GOOGLE_SHEET_WEB_APP_URL) {
+                syncFromGoogleSheet(true);
+            }
+        });
+
+        // ---------------------------------------------------------
+        // 3. VIEW NAVIGATION, TOAST NOTIFICATIONS & AUTHENTICATION
+        // ---------------------------------------------------------
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            const styles = {
+                success: 'bg-sage text-white border-teal-800',
+                error: 'bg-terracotta text-white border-orange-800',
+                info: 'bg-ink text-white border-slate-700'
+            };
+            const icons = {
+                success: 'fa-circle-check',
+                error: 'fa-circle-exclamation',
+                info: 'fa-circle-info'
+            };
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-lg text-xs sm:text-sm font-bold flex items-center gap-2.5 transition-all duration-300 transform translate-y-2 opacity-0 ${styles[type] || styles.info}`;
+            toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        function showView(viewId) {
+            const views = [
+                'view-login',
+                'view-student-lobby',
+                'view-quiz',
+                'view-quiz-result',
+                'view-teacher-dashboard'
+            ];
+            views.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (id === viewId) el.classList.remove('hidden');
+                    else el.classList.add('hidden');
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateNavUserPill() {
+            const pill = document.getElementById('user-nav-pill');
+            const nameEl = document.getElementById('nav-user-name');
+            if (!pill || !nameEl) return;
+
+            if (currentUser) {
+                pill.classList.remove('hidden');
+                pill.classList.add('flex');
+                nameEl.textContent = currentUser.role === 'teacher'
+                    ? `${currentUser.data.name}（管理端）`
+                    : `${currentUser.data.id} ${currentUser.data.name}`;
+            } else {
+                pill.classList.add('hidden');
+                pill.classList.remove('flex');
+                nameEl.textContent = '';
+            }
+        }
+
+        function switchLoginTab(tab) {
+            playSound('click');
+            const stuTab = document.getElementById('tab-login-student');
+            const teaTab = document.getElementById('tab-login-teacher');
+            const stuForm = document.getElementById('form-student-login');
+            const teaForm = document.getElementById('form-teacher-login');
+
+            if (tab === 'student') {
+                stuTab.className = 'py-4 font-bold text-sm text-sage border-b-2 border-sage bg-white transition flex items-center justify-center gap-2';
+                teaTab.className = 'py-4 font-bold text-sm text-inklight hover:text-ink transition flex items-center justify-center gap-2';
+                stuForm.classList.remove('hidden');
+                teaForm.classList.add('hidden');
+            } else {
+                teaTab.className = 'py-4 font-bold text-sm text-terracotta border-b-2 border-terracotta bg-white transition flex items-center justify-center gap-2';
+                stuTab.className = 'py-4 font-bold text-sm text-inklight hover:text-ink transition flex items-center justify-center gap-2';
+                teaForm.classList.remove('hidden');
+                stuForm.classList.add('hidden');
+            }
+        }
+
+        function fillDemoStudent(id, bday) {
+            playSound('click');
+            document.getElementById('stu-id-input').value = id;
+            document.getElementById('stu-bday-input').value = bday;
+        }
+
+        function handleStudentLogin(event) {
+            event.preventDefault();
+            playSound('click');
+            const inputId = document.getElementById('stu-id-input').value.trim();
+            const inputBday = document.getElementById('stu-bday-input').value.trim();
+
+            const student = studentsDB.find(s =>
+                String(s.id).trim() === inputId &&
+                (String(s.bday).trim() === inputBday || String(s.bday).trim().endsWith(inputBday))
+            );
+
+            if (!student) {
+                playSound('wrong');
+                showToast('學號或生日密碼不正確，請重新確認！', 'error');
+                return;
+            }
+
+            currentUser = { role: 'student', data: student };
+            updateNavUserPill();
+            renderStudentLobby();
+            showView('view-student-lobby');
+            showToast(`歡迎回來，${student.name} 同學！`, 'success');
+        }
+
+        function handleTeacherLogin(event) {
+            event.preventDefault();
+            playSound('click');
+            const user = document.getElementById('teacher-user-input').value.trim();
+            const pass = document.getElementById('teacher-pass-input').value.trim();
+
+            const account = TEACHER_ACCOUNTS.find(t => t.user === user && t.pass === pass);
+            if (!account) {
+                playSound('wrong');
+                showToast('教師帳號或密碼錯誤！', 'error');
+                return;
+            }
+
+            currentUser = { role: 'teacher', data: account };
+            updateNavUserPill();
+            renderTeacherDashboard();
+            showView('view-teacher-dashboard');
+            showToast(`已登入教師管理後台（${account.name}）`, 'success');
+        }
+
+        function logout() {
+            playSound('click');
+            currentUser = null;
+            updateNavUserPill();
+            showView('view-login');
+            showToast('已安全登出系統', 'info');
+        }
+
+        function resetToHome() {
+            playSound('click');
+            if (!currentUser) {
+                showView('view-login');
+            } else if (currentUser.role === 'student') {
+                renderStudentLobby();
+                showView('view-student-lobby');
+            } else {
+                renderTeacherDashboard();
+                showView('view-teacher-dashboard');
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 5. STUDENT LOBBY & NAMED-VOLUME 10-QUESTION QUIZ ENGINE
+        // ---------------------------------------------------------
+        function renderStudentLobby() {
+            const stu = studentsDB.find(s => s.id === currentUser.data.id);
+            currentUser.data = stu;
+
+            document.getElementById('stu-monogram').textContent = stu.name.charAt(0);
+            document.getElementById('stu-welcome-name').textContent = `${stu.name} 同學`;
+            document.getElementById('stu-id-badge').textContent = `學號 ${stu.id}`;
+            document.getElementById('stu-today-date').textContent = TODAY_STR;
+
+            // Render ONLY the exact Named Volumes (`assignedSets`, e.g., A-a-1, D-b-1) assigned by teacher!
+            const domainsGrid = document.getElementById('stu-domains-grid');
+            const assignedList = stu.assignedSets || [];
+
+            if (assignedList.length === 0) {
+                domainsGrid.innerHTML = `
+                    <div class="col-span-full p-8 rounded-2xl bg-paper border border-sand text-center space-y-2">
+                        <div class="w-12 h-12 rounded-full bg-sagelight text-sage flex items-center justify-center mx-auto text-xl">
+                            <i class="fa-solid fa-mug-hot"></i>
+                        </div>
+                        <h4 class="font-serif font-bold text-base text-ink">今日無教師指定作答試卷</h4>
+                        <p class="text-xs text-inklight">目前沒有派發給你的指定卷別，你可以先瀏覽下方歷史作答紀錄。</p>
+                    </div>
+                `;
+            } else {
+                domainsGrid.innerHTML = assignedList.map(setCode => {
+                    const volInfo = parseVolumeCode(setCode);
+                    const dMeta = DOMAINS[volInfo.domain] || DOMAINS.vernacular;
+                    const tMeta = TIERS[volInfo.tier] || TIERS.basic;
+
+                    const attempts = quizLogsDB.filter(l => l.studentId === stu.id && l.setId === volInfo.setId);
+                    const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
+                    const qCountInSet = questionsDB.filter(q => q.setId === volInfo.setId).length;
+
+                    return `
+                        <div class="p-5 rounded-2xl bg-paper border border-sand hover:border-sage/50 transition flex flex-col justify-between gap-4">
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-2">
+                                    <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-black bg-ink text-white">
+                                        ${volInfo.setId}
+                                    </span>
+                                    <span class="px-2.5 py-0.5 rounded-md text-xs font-bold border ${tMeta.pillClass}">
+                                        ${tMeta.label}
+                                    </span>
+                                </div>
+                                <h4 class="text-base font-serif font-bold text-ink flex items-center gap-1.5 mt-1">
+                                    <i class="fa-solid ${dMeta.icon} text-sage"></i>
+                                    ${volInfo.fullTitle}
+                                </h4>
+                                <p class="text-xs text-inklight mt-1">教師指定作答試卷（題庫收錄 ${qCountInSet} 題・每次 10 題）</p>
+                            </div>
+
+                            <div class="space-y-2">
+                                ${latestAttempt ? `
+                                    <div class="flex items-center justify-between text-xs bg-sagelight/70 text-sage px-3 py-1.5 rounded-lg font-bold">
+                                        <span><i class="fa-solid fa-circle-check mr-1"></i>已完成 (${latestAttempt.date})</span>
+                                        <span>${latestAttempt.score} 分</span>
+                                    </div>
+                                ` : ''}
+                                <button onclick="startVolumeQuiz('${volInfo.setId}')" class="btn-press w-full py-2.5 rounded-xl ${latestAttempt ? 'bg-white hover:bg-sagelight text-sage border border-sage/40' : 'bg-sage hover:bg-teal-800 text-white shadow-sm'} font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <span>${latestAttempt ? `重新練習 ${volInfo.setId}` : `開始作答 ${volInfo.setId}`}</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Render Student's Past Records
+            const historyList = document.getElementById('stu-history-list');
+            const myLogs = quizLogsDB.filter(log => log.studentId === stu.id);
+            if (myLogs.length === 0) {
+                historyList.innerHTML = `<p class="text-xs text-inklight text-center py-6">尚無練習紀錄，請選擇上方指定試卷開始測驗。</p>`;
+            } else {
+                historyList.innerHTML = myLogs.slice().reverse().map(log => {
+                    const volInfo = parseVolumeCode(log.setId, log.domain, log.tier);
+                    const dMeta = DOMAINS[volInfo.domain] || DOMAINS.vernacular;
+                    const tMeta = TIERS[volInfo.tier] || TIERS.basic;
+                    return `
+                        <div class="p-3.5 rounded-xl bg-paper border border-sand flex items-center justify-between gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs font-mono font-bold text-inklight">${log.date} ${log.time}</span>
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-ink text-white">${volInfo.setId}</span>
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${dMeta.badgeClass}">${volInfo.shortTitle}</span>
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${tMeta.pillClass}">${tMeta.label}</span>
+                                <span class="text-xs text-inklight">答對 ${log.correctCount}/${log.totalQuestions} 題</span>
+                            </div>
+                            <span class="text-base sm:text-lg font-black ${log.score >= 80 ? 'text-sage' : 'text-terracotta'} shrink-0">${log.score} 分</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function returnToStudentLobby() {
+            playSound('click');
+            renderStudentLobby();
+            showView('view-student-lobby');
+        }
+
+        // Student Self-Service Password Update (Student ID stays permanently fixed)
+        function openChangePasswordModal() {
+            playSound('click');
+            const stu = currentUser.data;
+            document.getElementById('pwd-modal-stuid').textContent = `${stu.id}（${stu.name}）`;
+            document.getElementById('pwd-current-input').value = '';
+            document.getElementById('pwd-new-input').value = '';
+            document.getElementById('pwd-confirm-input').value = '';
+            document.getElementById('modal-change-password').classList.remove('hidden');
+        }
+
+        function closeChangePasswordModal() {
+            playSound('click');
+            document.getElementById('modal-change-password').classList.add('hidden');
+        }
+
+        async function handleStudentPasswordChange(event) {
+            event.preventDefault();
+            const stu = studentsDB.find(s => s.id === currentUser.data.id);
+            if (!stu) return;
+
+            const currentPwd = document.getElementById('pwd-current-input').value.trim();
+            const newPwd = document.getElementById('pwd-new-input').value.trim();
+            const confirmPwd = document.getElementById('pwd-confirm-input').value.trim();
+
+            if (String(stu.bday).trim() !== currentPwd && !String(stu.bday).trim().endsWith(currentPwd)) {
+                playSound('wrong');
+                showToast('目前密碼輸入錯誤，請重新確認！', 'error');
+                return;
+            }
+
+            if (newPwd.length < 4) {
+                playSound('wrong');
+                showToast('新密碼長度請至少設定 4 碼！', 'error');
+                return;
+            }
+
+            if (newPwd !== confirmPwd) {
+                playSound('wrong');
+                showToast('兩次輸入的新密碼不一致！', 'error');
+                return;
+            }
+
+            // Update password locally (Student ID remains fixed)
+            stu.bday = newPwd;
+            currentUser.data = stu;
+            playSound('correct');
+            closeChangePasswordModal();
+            showToast('登入密碼已成功更新！下次請使用新密碼登入', 'success');
+
+            // Sync new password back to Google Sheet (`學生名單` C column)
+            if (GOOGLE_SHEET_WEB_APP_URL) {
+                try {
+                    await fetch(GOOGLE_SHEET_WEB_APP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'updateStudentPassword',
+                            studentId: stu.id,
+                            newPassword: newPwd
+                        })
+                    });
+                } catch (e) {}
+            }
+        }
+
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        // Start a 10-question quiz strictly matching the assigned Named Volume Code (e.g. "A-a-1")
+        function startVolumeQuiz(setCode) {
+            playSound('click');
+            const stu = currentUser.data;
+            const volInfo = parseVolumeCode(setCode);
+
+            // 1. Primary pool: Questions strictly tagged with this exact `setId` (e.g. "A-a-1")
+            let selected = questionsDB.filter(q => (q.setId || '').trim() === volInfo.setId);
+
+            // 2. If fewer than 10 questions exist in that exact volume, pad from same domain + tier
+            if (selected.length < 10) {
+                const sameDomainTier = shuffleArray(questionsDB.filter(q =>
+                    q.domain === volInfo.domain &&
+                    q.tier === volInfo.tier &&
+                    !selected.some(s => s.id === q.id)
+                ));
+                selected = [...selected, ...sameDomainTier];
+            }
+
+            // 3. Repeat pool if bank still has fewer than 10 items so student always gets 10 practice questions
+            while (selected.length > 0 && selected.length < 10) {
+                selected = [...selected, ...shuffleArray(selected)];
+            }
+
+            // Keep questions sharing the same reading passage adjacent for smooth reading experience
+            const finalTen = selected.slice(0, 10);
+            const orderedQuestions = [];
+            const visited = new Set();
+            finalTen.forEach((q, idx) => {
+                if (visited.has(idx)) return;
+                orderedQuestions.push(q);
+                visited.add(idx);
+                if (q.passage && q.passage.trim() !== '') {
+                    finalTen.forEach((otherQ, otherIdx) => {
+                        if (!visited.has(otherIdx) && otherQ.passage === q.passage) {
+                            orderedQuestions.push(otherQ);
+                            visited.add(otherIdx);
+                        }
+                    });
+                }
+            });
+
+            activeQuiz = {
+                setId: volInfo.setId,
+                domain: volInfo.domain,
+                tier: volInfo.tier,
+                questions: orderedQuestions,
+                currentIndex: 0,
+                correctCount: 0,
+                answeredCurrent: false,
+                records: []
+            };
+
+            showView('view-quiz');
+            renderCurrentQuestion();
+        }
+
+        function retryCurrentVolume() {
+            startVolumeQuiz(activeQuiz.setId);
+        }
+
+        function renderCurrentQuestion() {
+            const q = activeQuiz.questions[activeQuiz.currentIndex];
+            const total = activeQuiz.questions.length;
+            const num = activeQuiz.currentIndex + 1;
+
+            activeQuiz.answeredCurrent = false;
+
+            document.getElementById('quiz-progress-text').textContent = `第 ${num} / ${total} 題`;
+            document.getElementById('quiz-progress-bar').style.width = `${(num / total) * 100}%`;
+
+            // Volume Code & Tier Badges
+            const volInfo = parseVolumeCode(activeQuiz.setId, activeQuiz.domain, activeQuiz.tier);
+            const dMeta = DOMAINS[volInfo.domain] || DOMAINS.vernacular;
+            const domainBadge = document.getElementById('quiz-domain-badge');
+            domainBadge.textContent = `${volInfo.setId}｜${volInfo.shortTitle}`;
+            domainBadge.className = `px-2.5 py-0.5 rounded-md text-xs font-bold border ${dMeta.badgeClass}`;
+
+            const tMeta = TIERS[volInfo.tier] || TIERS.basic;
+            const tierBadge = document.getElementById('quiz-tier-badge');
+            tierBadge.textContent = tMeta.label;
+            tierBadge.className = `px-2.5 py-0.5 rounded-md text-xs font-bold border ${tMeta.pillClass}`;
+
+            // Show or hide Long Reading Passage Box
+            const passageBox = document.getElementById('quiz-passage-box');
+            const passageText = document.getElementById('quiz-passage-text');
+            const passageTag = document.getElementById('quiz-passage-tag');
+            if (q.passage && q.passage.trim() !== '') {
+                passageBox.classList.remove('hidden');
+                passageText.textContent = q.passage;
+                passageTag.textContent = `試卷：${volInfo.setId}`;
+            } else {
+                passageBox.classList.add('hidden');
+                passageText.textContent = '';
+            }
+
+            document.getElementById('quiz-question-text').textContent = q.text;
+            document.getElementById('quiz-feedback-box').classList.add('hidden');
+
+            const optionLabels = ['A', 'B', 'C', 'D'];
+            const container = document.getElementById('quiz-options-container');
+            container.innerHTML = q.options.map((optText, idx) => `
+                <button onclick="selectAnswer(${idx})" id="opt-btn-${idx}" class="btn-press w-full text-left p-4 rounded-xl bg-paper hover:bg-sagelight/60 border border-sand font-medium text-ink flex items-center gap-3.5 transition">
+                    <span class="w-7 h-7 rounded-lg bg-white border border-sand flex items-center justify-center font-bold text-xs text-inklight shrink-0">
+                        ${optionLabels[idx]}
+                    </span>
+                    <span class="text-sm sm:text-base">${optText}</span>
+                </button>
+            `).join('');
+        }
+
+        function selectAnswer(selectedIndex) {
+            if (activeQuiz.answeredCurrent) return;
+            activeQuiz.answeredCurrent = true;
+
+            const q = activeQuiz.questions[activeQuiz.currentIndex];
+            const isCorrect = selectedIndex === q.answer;
+
+            if (isCorrect) {
+                activeQuiz.correctCount++;
+                playSound('correct');
+            } else {
+                playSound('wrong');
+            }
+
+            activeQuiz.records.push(`${q.id}(${isCorrect ? 'O' : 'X'})`);
+
+            q.options.forEach((_, idx) => {
+                const btn = document.getElementById(`opt-btn-${idx}`);
+                btn.disabled = true;
+                if (idx === q.answer) {
+                    btn.className = 'w-full text-left p-4 rounded-xl bg-sagelight border-2 border-sage font-bold text-sage flex items-center gap-3.5';
+                } else if (idx === selectedIndex && !isCorrect) {
+                    btn.className = 'w-full text-left p-4 rounded-xl bg-terralight border-2 border-terracotta font-bold text-terracotta flex items-center gap-3.5';
+                } else {
+                    btn.className = 'w-full text-left p-4 rounded-xl bg-paper/50 border border-sand/60 text-inklight/60 flex items-center gap-3.5';
+                }
+            });
+
+            const fbBox = document.getElementById('quiz-feedback-box');
+            const fbTitle = document.getElementById('quiz-feedback-title');
+            const fbDesc = document.getElementById('quiz-feedback-desc');
+            const nextBtn = document.getElementById('quiz-next-btn');
+
+            fbBox.classList.remove('hidden');
+            if (isCorrect) {
+                fbBox.className = 'mt-6 p-4 rounded-xl border border-sage/40 bg-sagelight/70 text-sage text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4';
+                fbTitle.innerHTML = '<i class="fa-solid fa-circle-check mr-1.5"></i> 答對了';
+                fbDesc.textContent = q.explanation || '作答正確，請繼續保持。';
+            } else {
+                fbBox.className = 'mt-6 p-4 rounded-xl border border-terracotta/40 bg-terralight/80 text-terracotta text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4';
+                fbTitle.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1.5"></i> 正確答案為 (${['A', 'B', 'C', 'D'][q.answer]}) ${q.options[q.answer]}`;
+                fbDesc.textContent = q.explanation || '請留意題幹關鍵線索與字義辨析。';
+            }
+
+            const isLast = activeQuiz.currentIndex === activeQuiz.questions.length - 1;
+            nextBtn.innerHTML = isLast
+                ? '完成本卷並回傳成績 <i class="fa-solid fa-check ml-1"></i>'
+                : '下一題 <i class="fa-solid fa-chevron-right ml-1"></i>';
+        }
+
+        function nextQuestion() {
+            playSound('click');
+            if (activeQuiz.currentIndex < activeQuiz.questions.length - 1) {
+                activeQuiz.currentIndex++;
+                renderCurrentQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        async function finishQuiz() {
+            playSound('complete');
+            const total = activeQuiz.questions.length;
+            const score = Math.round((activeQuiz.correctCount / total) * 100);
+            const stu = currentUser.data;
+            const volInfo = parseVolumeCode(activeQuiz.setId, activeQuiz.domain, activeQuiz.tier);
+            const dMeta = DOMAINS[volInfo.domain];
+            const tMeta = TIERS[volInfo.tier];
+
+            const now = new Date();
+            const dateStr = TODAY_STR;
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const recordPayload = {
+                date: dateStr,
+                time: timeStr,
+                studentId: stu.id,
+                studentName: stu.name,
+                setId: volInfo.setId,
+                domain: volInfo.domain,
+                domainName: `${volInfo.setId} ${volInfo.shortTitle}`,
+                tier: volInfo.tier,
+                tierName: tMeta.label,
+                score,
+                correctCount: activeQuiz.correctCount,
+                totalQuestions: total,
+                details: activeQuiz.records.join(', ')
+            };
+
+            quizLogsDB.push(recordPayload);
+
+            // Populate Result View
+            document.getElementById('result-volume-badge').textContent = `${volInfo.setId}（${volInfo.fullTitle}）結算報告`;
+            document.getElementById('result-score').textContent = score;
+            document.getElementById('result-correct-count').textContent = activeQuiz.correctCount;
+
+            showView('view-quiz-result');
+
+            // Sync to Google Sheets if configured
+            const syncMsg = document.getElementById('result-sync-msg');
+            if (GOOGLE_SHEET_WEB_APP_URL) {
+                syncMsg.textContent = '正在將本卷作答數據回傳至 Google 試算表...';
+                try {
+                    await fetch(GOOGLE_SHEET_WEB_APP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(recordPayload)
+                    });
+                    syncMsg.textContent = '已成功將本卷成績寫入 Google 試算表「作答紀錄」！';
+                    showToast('作答數據已同步至 Google 試算表', 'success');
+                } catch (e) {
+                    syncMsg.textContent = '網路連線異常，已先暫存於系統紀錄。';
+                }
+            } else {
+                syncMsg.textContent = '已記錄於系統數據庫（貼上試算表網址後將自動同步寫入雲端）';
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 6. TEACHER DASHBOARD: DATE-AWARE & NAMED-VOLUME ANALYTICS
+        // ---------------------------------------------------------
+        function renderTeacherDashboard() {
+            populateDateFilter();
+            populateVolumeFilter();
+            handleTeacherFilterChange();
+            renderTeacherCompetencyTable();
+            renderSheetQuestionsPreview();
+        }
+
+        function populateDateFilter() {
+            const select = document.getElementById('filter-date-select');
+            const currentVal = select.value;
+            const dates = Array.from(new Set([TODAY_STR, ...quizLogsDB.map(l => l.date)])).sort().reverse();
+            select.innerHTML = dates.map(d => `<option value="${d}">${d}${d === TODAY_STR ? ' (今日)' : ''}</option>`).join('');
+            if (currentVal && dates.includes(currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        function populateVolumeFilter() {
+            const select = document.getElementById('filter-volume-select');
+            const sheetFilter = document.getElementById('filter-sheet-domain');
+            const batchRoundSelect = document.getElementById('batch-round-select');
+            const currentVal = select.value;
+            const catalog = getAvailableVolumeCatalog();
+
+            const optionsHtml = catalog.map(v =>
+                `<option value="${v.setId}">${v.setId}（${v.shortTitle}）</option>`
+            ).join('');
+
+            select.innerHTML = `<option value="all">全部試卷總覽</option>` + optionsHtml;
+            if (currentVal && (currentVal === 'all' || catalog.some(c => c.setId === currentVal))) {
+                select.value = currentVal;
+            }
+
+            if (sheetFilter) {
+                const curSheetVal = sheetFilter.value;
+                sheetFilter.innerHTML = `<option value="all">全部試卷題庫（共 ${questionsDB.length} 題）</option>` + optionsHtml;
+                if (curSheetVal && (curSheetVal === 'all' || catalog.some(c => c.setId === curSheetVal))) {
+                    sheetFilter.value = curSheetVal;
+                }
+            }
+
+            // Populate available volume round numbers (-1, -2, -3...) dynamically from the question bank
+            if (batchRoundSelect) {
+                const curRound = batchRoundSelect.value || '1';
+                const rounds = Array.from(new Set(catalog.map(v => String(v.volumeNum || '1'))))
+                    .sort((a, b) => Number(a) - Number(b));
+                if (rounds.length > 0) {
+                    batchRoundSelect.innerHTML = rounds.map(r => `<option value="${r}">第 ${r} 卷 (-${r})</option>`).join('');
+                    if (rounds.includes(curRound)) batchRoundSelect.value = curRound;
+                }
+            }
+        }
+
+        // Batch dispatch a chosen volume round (e.g. Round 2 -> A-a-2 / A-b-2 / A-c-2) matched to every student's saved competency level
+        function executeBatchCompetencyDispatch() {
+            playSound('correct');
+            const checkedBoxes = Array.from(document.querySelectorAll('#batch-domain-checkboxes input[type="checkbox"]:checked'));
+            if (checkedBoxes.length === 0) {
+                showToast('請至少勾選一個要派發的國文項目！', 'error');
+                return;
+            }
+
+            const selectedDomains = checkedBoxes.map(cb => cb.value);
+            const roundNum = document.getElementById('batch-round-select').value || '1';
+            const mode = document.getElementById('batch-mode-select').value || 'replace';
+            const catalog = getAvailableVolumeCatalog();
+
+            let totalAssignedCount = 0;
+            const missingCodes = new Set();
+
+            studentsDB.forEach(stu => {
+                const newCodesForStudent = [];
+                selectedDomains.forEach(dKey => {
+                    const dCode = DOMAIN_TO_CODE[dKey];
+                    const tCode = TIER_TO_CODE[stu.levels[dKey] || 'basic'];
+                    const targetCode = `${dCode}-${tCode}-${roundNum}`;
+
+                    if (catalog.some(v => v.setId === targetCode)) {
+                        newCodesForStudent.push(targetCode);
+                    } else {
+                        missingCodes.add(targetCode);
+                    }
+                });
+
+                if (mode === 'replace') {
+                    stu.assignedSets = newCodesForStudent;
+                } else {
+                    const merged = new Set([...(stu.assignedSets || []), ...newCodesForStudent]);
+                    stu.assignedSets = Array.from(merged);
+                }
+
+                totalAssignedCount += newCodesForStudent.length;
+                syncStudentProfileToSheet(stu);
+            });
+
+            handleTeacherFilterChange();
+
+            const domainNames = selectedDomains.map(d => DOMAINS[d].short).join('、');
+            if (missingCodes.size > 0 && totalAssignedCount === 0) {
+                showToast(`題庫中尚未建立「${domainNames}」第 ${roundNum} 卷的題目（如 ${Array.from(missingCodes).slice(0, 2).join('、')}）`, 'error');
+            } else if (missingCodes.size > 0) {
+                showToast(`已依全班能力派發「${domainNames}」第 ${roundNum} 卷（部分組別題庫尚無第 ${roundNum} 卷：${Array.from(missingCodes).join(', ')}）`, 'info');
+            } else {
+                showToast(`已依全班能力值${mode === 'replace' ? '覆蓋派發' : '累加派發'}「${domainNames}」第 ${roundNum} 卷！`, 'success');
+            }
+        }
+
+        function handleTeacherFilterChange() {
+            const selectedDate = document.getElementById('filter-date-select').value || TODAY_STR;
+            const selectedVolume = document.getElementById('filter-volume-select').value || 'all';
+
+            document.getElementById('teacher-selected-date-badge').textContent = selectedDate;
+
+            // Filter logs for the selected date (and selected volume code if not 'all')
+            const dayAllLogs = quizLogsDB.filter(l => l.date === selectedDate);
+            const dayFilteredLogs = selectedVolume === 'all'
+                ? dayAllLogs
+                : dayAllLogs.filter(l => (l.setId || '') === selectedVolume);
+
+            // Update Date-Specific KPI Cards
+            const completedStudentIds = new Set(dayFilteredLogs.map(l => l.studentId));
+            document.getElementById('stat-label-completed').textContent =
+                selectedVolume === 'all' ? `${selectedDate} 有作答人數` : `${selectedDate} 完成 ${selectedVolume} 人數`;
+            document.getElementById('stat-today-completed').textContent = completedStudentIds.size;
+            document.getElementById('stat-total-students').textContent = studentsDB.length;
+
+            const avg = dayFilteredLogs.length > 0
+                ? Math.round(dayFilteredLogs.reduce((acc, cur) => acc + cur.score, 0) / dayFilteredLogs.length)
+                : 0;
+            document.getElementById('stat-label-avg').textContent =
+                selectedVolume === 'all' ? `${selectedDate} 全班總平均` : `${selectedDate} ${selectedVolume} 平均`;
+            document.getElementById('stat-today-avg').textContent = dayFilteredLogs.length > 0 ? `${avg} 分` : '--';
+
+            // Per-Volume Averages on that specific date (5 domains)
+            const calcDomainAvg = (dKey) => {
+                const dLogs = dayAllLogs.filter(l => l.domain === dKey);
+                if (dLogs.length === 0) return '--';
+                return Math.round(dLogs.reduce((acc, c) => acc + c.score, 0) / dLogs.length) + '分';
+            };
+            document.getElementById('stat-domain-avgs').innerHTML = `
+                <div>白話(A)：${calcDomainAvg('vernacular')} ｜ 字音(B)：${calcDomainAvg('phonetics')} ｜ 文言(C)：${calcDomainAvg('classical')}</div>
+                <div>課文(D)：${calcDomainAvg('lesson')} ｜ 國學(E)：${calcDomainAvg('sinology')}</div>
+            `;
+
+            document.getElementById('stat-sheet-qcount').textContent = questionsDB.length;
+
+            renderTeacherDailyTable(selectedDate, selectedVolume);
+            renderTeacherLogs(selectedDate, selectedVolume);
+        }
+
+        function switchTeacherTab(tabName) {
+            playSound('click');
+            const tabs = ['daily', 'competency', 'logs', 'sheet-preview'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`ttab-${t}`);
+                const panel = document.getElementById(`teacher-panel-${t}`);
+                if (!btn || !panel) return;
+                if (t === tabName) {
+                    btn.className = 'px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-ink text-white transition flex items-center gap-2';
+                    panel.classList.remove('hidden');
+                } else {
+                    btn.className = 'px-4 py-2 rounded-xl font-bold text-xs sm:text-sm bg-white text-inklight hover:text-ink border border-sand transition flex items-center gap-2';
+                    panel.classList.add('hidden');
+                }
+            });
+        }
+
+        // Render Teacher Daily Student Data & Named Volume Code Assignment (A-a-1, A-b-1, etc.)
+        function renderTeacherDailyTable(selectedDate, selectedVolume) {
+            const thead = document.getElementById('teacher-daily-thead');
+            const tbody = document.getElementById('teacher-daily-tbody');
+            const titleEl = document.getElementById('daily-table-title');
+            const catalog = getAvailableVolumeCatalog();
+
+            // Render interactive tag list of assigned volume codes + 3-step cascading picker (類型 -> 等級 -> 卷別 -> 新增)
+            const renderAssignedSetManager = (stu) => {
+                const assigned = stu.assignedSets || [];
+                const defaultDomain = 'vernacular';
+                const defaultTier = stu.levels[defaultDomain] || 'basic';
+
+                const tagsHtml = assigned.length === 0
+                    ? `<span class="text-xs text-inklight bg-paper px-2.5 py-1 rounded-lg border border-sand">目前不派卷（能力值已保留）</span>`
+                    : assigned.map(code => {
+                        const vInfo = parseVolumeCode(code);
+                        const dMeta = DOMAINS[vInfo.domain] || DOMAINS.vernacular;
+                        return `
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${dMeta.badgeClass}">
+                                <span class="font-mono font-black">${vInfo.setId}</span>
+                                <span class="opacity-80">(${vInfo.shortTitle})</span>
+                                <button onclick="removeAssignedSet('${stu.id}', '${vInfo.setId}')" title="移除此指定卷" class="hover:text-rose-600 ml-0.5">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </span>
+                        `;
+                    }).join('');
+
+                // Build initial round options for defaultDomain + defaultTier
+                const matchingRounds = catalog.filter(v => v.domain === defaultDomain && v.tier === defaultTier);
+                const roundOptionsHtml = matchingRounds.length > 0
+                    ? matchingRounds.map(v => `<option value="${v.setId}">第 ${v.volumeNum} 卷 (${v.setId})</option>`).join('')
+                    : `<option value="${DOMAIN_TO_CODE[defaultDomain]}-${TIER_TO_CODE[defaultTier]}-1">第 1 卷 (${DOMAIN_TO_CODE[defaultDomain]}-${TIER_TO_CODE[defaultTier]}-1)</option>`;
+
+                const clearBtnHtml = assigned.length > 0 ? `
+                    <button onclick="clearAssignedSets('${stu.id}')" title="全部取消（設為今日不派卷）" class="text-[11px] text-inklight hover:text-terracotta underline ml-1">
+                        清空不派卷
+                    </button>
+                ` : '';
+
+                return `
+                    <div class="space-y-2">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            ${tagsHtml}
+                            ${clearBtnHtml}
+                        </div>
+                        <div class="inline-flex flex-wrap items-center gap-1.5 p-1.5 rounded-xl bg-paper border border-sand">
+                            <select id="pick-domain-${stu.id}" onchange="onStudentCascadePickerChange('${stu.id}', true)" class="px-2 py-1 rounded-lg bg-white border border-sand text-xs font-bold text-ink focus:outline-none cursor-pointer">
+                                ${Object.values(DOMAINS).map(d => `<option value="${d.key}">${d.code} ${d.short}</option>`).join('')}
+                            </select>
+                            <select id="pick-tier-${stu.id}" onchange="onStudentCascadePickerChange('${stu.id}', false)" class="px-2 py-1 rounded-lg bg-white border border-sand text-xs font-bold text-ink focus:outline-none cursor-pointer">
+                                <option value="basic" ${defaultTier === 'basic' ? 'selected' : ''}>a 基礎</option>
+                                <option value="intermediate" ${defaultTier === 'intermediate' ? 'selected' : ''}>b 進階</option>
+                                <option value="advanced" ${defaultTier === 'advanced' ? 'selected' : ''}>c 精熟</option>
+                            </select>
+                            <select id="pick-vol-${stu.id}" class="px-2 py-1 rounded-lg bg-white border border-sand text-xs font-mono font-bold text-ink focus:outline-none cursor-pointer">
+                                ${roundOptionsHtml}
+                            </select>
+                            <button onclick="confirmAddCascadedVolume('${stu.id}')" class="btn-press px-2.5 py-1 rounded-lg bg-sage hover:bg-teal-800 text-white text-xs font-bold flex items-center gap-1">
+                                <i class="fa-solid fa-plus text-[10px]"></i> 新增
+                            </button>
+                        </div>
+                    </div>
+                `;
+            };
+
+            // Mode A: Filtered to a SINGLE Named Volume Code (e.g. A-a-1)
+            if (selectedVolume !== 'all') {
+                const volInfo = parseVolumeCode(selectedVolume);
+                titleEl.textContent = `${selectedDate} ｜ 【${volInfo.setId} ${volInfo.fullTitle}】單卷成績與派卷名單`;
+
+                thead.innerHTML = `
+                    <tr class="border-b border-sand bg-paper text-[11px] font-bold text-inklight uppercase tracking-wider">
+                        <th class="py-3.5 px-4">學號 / 姓名</th>
+                        <th class="py-3.5 px-3">該科能力值</th>
+                        <th class="py-3.5 px-3">是否派發 ${volInfo.setId}</th>
+                        <th class="py-3.5 px-3">${selectedDate} 作答狀態</th>
+                        <th class="py-3.5 px-4 text-right">得分 (答對題數)</th>
+                    </tr>
+                `;
+
+                tbody.innerHTML = studentsDB.map(stu => {
+                    const dayLogs = quizLogsDB.filter(l => l.studentId === stu.id && l.date === selectedDate && l.setId === volInfo.setId);
+                    const latest = dayLogs.length > 0 ? dayLogs[dayLogs.length - 1] : null;
+                    const isAssigned = (stu.assignedSets || []).includes(volInfo.setId);
+                    const savedLevelMeta = TIERS[stu.levels[volInfo.domain] || 'basic'];
+
+                    return `
+                        <tr class="hover:bg-paper/70 transition">
+                            <td class="py-3.5 px-4">
+                                <div class="font-bold text-ink">${stu.name}</div>
+                                <div class="text-[11px] text-inklight font-mono">${stu.id}</div>
+                            </td>
+                            <td class="py-3.5 px-3">
+                                <span class="px-2.5 py-1 rounded-md text-xs font-bold border ${savedLevelMeta.pillClass}">${savedLevelMeta.label}</span>
+                            </td>
+                            <td class="py-3.5 px-3">
+                                <button onclick="toggleSingleVolumeAssignment('${stu.id}', '${volInfo.setId}')" class="px-3 py-1 rounded-lg text-xs font-bold border transition ${isAssigned ? 'bg-sagelight text-sage border-sage/40' : 'bg-paper text-inklight border-sand hover:border-sage'}">
+                                    ${isAssigned ? `已指定 ${volInfo.setId}` : `＋ 派發 ${volInfo.setId}`}
+                                </button>
+                            </td>
+                            <td class="py-3.5 px-3">
+                                ${latest
+                                    ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-sagelight text-sage"><i class="fa-solid fa-check"></i> 已交卷 (${latest.time})</span>`
+                                    : isAssigned
+                                        ? `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-paper text-inklight border border-sand">尚未作答</span>`
+                                        : `<span class="text-xs text-inklight">未派發此卷</span>`
+                                }
+                            </td>
+                            <td class="py-3.5 px-4 text-right">
+                                ${latest
+                                    ? `<span class="font-black text-base ${latest.score >= 80 ? 'text-sage' : 'text-terracotta'}">${latest.score} 分</span> <span class="text-xs text-inklight">(${latest.correctCount}/10題)</span>`
+                                    : `<span class="text-xs text-inklight">--</span>`
+                                }
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                return;
+            }
+
+            // Mode B: All Volumes Overview (全部試卷總覽)
+            titleEl.textContent = `${selectedDate} ｜ 各學生作答成績 ＆ 指定試卷代號管理（如 A-a-1）`;
+
+            thead.innerHTML = `
+                <tr class="border-b border-sand bg-paper text-[11px] font-bold text-inklight uppercase tracking-wider">
+                    <th class="py-3.5 px-4">學號 / 姓名</th>
+                    <th class="py-3.5 px-3">五科能力值摘要</th>
+                    <th class="py-3.5 px-3">${selectedDate} 已交卷成績</th>
+                    <th class="py-3.5 px-4">目前指定作答試卷代號（可複選或清空不派卷）</th>
+                </tr>
+            `;
+
+            tbody.innerHTML = studentsDB.map(stu => {
+                const dayLogs = quizLogsDB.filter(l => l.studentId === stu.id && l.date === selectedDate);
+                const logsHtml = dayLogs.length === 0
+                    ? `<span class="text-xs text-inklight">當日尚無交卷紀錄</span>`
+                    : dayLogs.map(l => `
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-paper border border-sand mr-1.5 mb-1">
+                            <span class="font-mono text-ink">${l.setId || DOMAINS[l.domain]?.short}</span>：
+                            <span class="${l.score >= 80 ? 'text-sage' : 'text-terracotta'} font-black">${l.score}分</span>
+                        </span>
+                    `).join('');
+
+                const levelSummary = Object.keys(DOMAINS).map(dKey => {
+                    const dMeta = DOMAINS[dKey];
+                    const tMeta = TIERS[stu.levels[dKey] || 'basic'];
+                    return `<span class="text-[11px] text-inklight mr-1.5">${dMeta.code}:${tMeta.short}</span>`;
+                }).join('');
+
+                return `
+                    <tr class="hover:bg-paper/70 transition">
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                            <div class="font-bold text-ink">${stu.name}</div>
+                            <div class="text-[11px] text-inklight font-mono">${stu.id}</div>
+                        </td>
+                        <td class="py-3.5 px-3 whitespace-nowrap font-mono">
+                            ${levelSummary}
+                        </td>
+                        <td class="py-3.5 px-3">
+                            ${logsHtml}
+                        </td>
+                        <td class="py-3.5 px-4">
+                            ${renderAssignedSetManager(stu)}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function addAssignedSet(studentId, setCode) {
+            if (!setCode) return;
+            playSound('correct');
+            const stu = studentsDB.find(s => s.id === studentId);
+            if (!stu) return;
+            if (!stu.assignedSets) stu.assignedSets = [];
+            if (!stu.assignedSets.includes(setCode)) {
+                stu.assignedSets.push(setCode);
+            }
+            handleTeacherFilterChange();
+            showToast(`已指定 ${stu.name} 作答【${setCode}】`, 'success');
+            syncStudentProfileToSheet(stu);
+        }
+
+        // Cascading 3-Step Picker Helpers (Step 1: Domain -> Step 2: Tier -> Step 3: Volume Round -> Add)
+        function onStudentCascadePickerChange(studentId, domainChanged) {
+            const stu = studentsDB.find(s => s.id === studentId);
+            if (!stu) return;
+
+            const domainEl = document.getElementById(`pick-domain-${studentId}`);
+            const tierEl = document.getElementById(`pick-tier-${studentId}`);
+            const volEl = document.getElementById(`pick-vol-${studentId}`);
+            if (!domainEl || !tierEl || !volEl) return;
+
+            const chosenDomain = domainEl.value;
+            // When the teacher switches the subject domain, automatically pre-select that student's saved competency tier!
+            if (domainChanged && stu.levels && stu.levels[chosenDomain]) {
+                tierEl.value = stu.levels[chosenDomain];
+            }
+
+            const chosenTier = tierEl.value;
+            const catalog = getAvailableVolumeCatalog();
+            const matchingRounds = catalog.filter(v => v.domain === chosenDomain && v.tier === chosenTier);
+
+            if (matchingRounds.length > 0) {
+                volEl.innerHTML = matchingRounds
+                    .map(v => `<option value="${v.setId}">第 ${v.volumeNum} 卷 (${v.setId})</option>`)
+                    .join('');
+            } else {
+                const fallbackCode = `${DOMAIN_TO_CODE[chosenDomain]}-${TIER_TO_CODE[chosenTier]}-1`;
+                volEl.innerHTML = `<option value="${fallbackCode}">第 1 卷 (${fallbackCode})</option>`;
+            }
+        }
+
+        function confirmAddCascadedVolume(studentId) {
+            const volEl = document.getElementById(`pick-vol-${studentId}`);
+            if (!volEl || !volEl.value) return;
+            addAssignedSet(studentId, volEl.value);
+        }
+
+        function removeAssignedSet(studentId, setCode) {
+            playSound('click');
+            const stu = studentsDB.find(s => s.id === studentId);
+            if (!stu) return;
+            stu.assignedSets = (stu.assignedSets || []).filter(c => c !== setCode);
+            handleTeacherFilterChange();
+            showToast(`已移除 ${stu.name} 的試卷【${setCode}】`, 'info');
+            syncStudentProfileToSheet(stu);
+        }
+
+        function clearAssignedSets(studentId) {
+            playSound('click');
+            const stu = studentsDB.find(s => s.id === studentId);
+            if (!stu) return;
+            stu.assignedSets = [];
+            handleTeacherFilterChange();
+            showToast(`已將 ${stu.name} 設為今日不派卷（五科能力值檔案已完整保留）`, 'info');
+            syncStudentProfileToSheet(stu);
+        }
+
+        function toggleSingleVolumeAssignment(studentId, setCode) {
+            const stu = studentsDB.find(s => s.id === studentId);
+            if (!stu) return;
+            if ((stu.assignedSets || []).includes(setCode)) {
+                removeAssignedSet(studentId, setCode);
+            } else {
+                addAssignedSet(studentId, setCode);
+            }
+        }
+
+        // Render Permanent 5-Domain Competency Matrix (Sub-tab 2)
+        function renderTeacherCompetencyTable() {
+            const tbody = document.getElementById('teacher-competency-tbody');
+            if (!tbody) return;
+
+            const renderLevelDropdown = (stu, domainKey) => {
+                const curLevel = stu.levels[domainKey] || 'basic';
+                const ringColor = curLevel === 'advanced' ? 'border-terracotta/50 bg-terralight/50 text-terracotta'
+                                : curLevel === 'intermediate' ? 'border-sage/50 bg-sagelight/50 text-sage'
+                                : 'border-sand bg-paper text-ink';
+                return `
+                    <select onchange="updateStudentPermanentLevel('${stu.id}', '${domainKey}', this.value)" class="px-2.5 py-1.5 rounded-lg border text-xs font-bold focus:outline-none cursor-pointer transition ${ringColor}">
+                        <option value="basic" ${curLevel === 'basic' ? 'selected' : ''}>基礎組</option>
+                        <option value="intermediate" ${curLevel === 'intermediate' ? 'selected' : ''}>進階組</option>
+                        <option value="advanced" ${curLevel === 'advanced' ? 'selected' : ''}>精熟組</option>
+                    </select>
+                `;
+            };
+
+            tbody.innerHTML = studentsDB.map(stu => {
+                const domainKeys = Object.keys(DOMAINS);
+                const advCount = domainKeys.filter(k => stu.levels[k] === 'advanced').length;
+                const intCount = domainKeys.filter(k => stu.levels[k] === 'intermediate').length;
+                const basCount = domainKeys.filter(k => stu.levels[k] === 'basic').length;
+
+                return `
+                    <tr class="hover:bg-paper/70 transition">
+                        <td class="py-3.5 px-4">
+                            <div class="font-bold text-ink">${stu.name}</div>
+                            <div class="text-[11px] text-inklight font-mono">${stu.id}</div>
+                        </td>
+                        <td class="py-3.5 px-3">${renderLevelDropdown(stu, 'vernacular')}</td>
+                        <td class="py-3.5 px-3">${renderLevelDropdown(stu, 'phonetics')}</td>
+                        <td class="py-3.5 px-3">${renderLevelDropdown(stu, 'classical')}</td>
+                        <td class="py-3.5 px-3">${renderLevelDropdown(stu, 'lesson')}</td>
+                        <td class="py-3.5 px-3">${renderLevelDropdown(stu, 'sinology')}</td>
+                        <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                            <span class="text-[11px] font-bold text-terracotta">精熟 ${advCount}</span> ・
+                            <span class="text-[11px] font-bold text-sage">進階 ${intCount}</span> ・
+                            <span class="text-[11px] font-bold text-inklight">基礎 ${basCount}</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Toggle daily dispatch ON/OFF without altering the student's saved competency level
+        async function handleDailyDispatchSelect(studentId, domainKey, mode) {
+            playSound('correct');
+            const stu = studentsDB.find(s => s.id === studentId);
+            if (!stu) return;
+
+            const shouldDispatch = mode === 'dispatch';
+            stu.dispatch[domainKey] = shouldDispatch;
+
+            handleTeacherFilterChange();
+            const savedLabel = TIERS[stu.levels[domainKey]].label;
+            if (shouldDispatch) {
+                showToast(`已恢復派發 ${stu.name} 的「${DOMAINS[domainKey].short}」（自動採用原能力值：${savedLabel}）`, 'success');
+            } else {
+                showToast(`已設為今日不派發「${DOMAINS[domainKey].short}」（原能力值【${savedLabel}】已保留）`, 'info');
+            }
+
+            syncStudentProfileToSheet(stu);
+        }
+
+        // Update permanent competency level in the Competency Profile tab
+        async function updateStudentPermanentLevel(studentId, domainKey, newLevel) {
+            playSound('correct');
+            const stu = studentsDB.find(s => s.id === studentId);
+            if (!stu) return;
+
+            stu.levels[domainKey] = newLevel;
+            renderTeacherCompetencyTable();
+            handleTeacherFilterChange();
+            showToast(`已更新 ${stu.name} 的「${DOMAINS[domainKey].label}」為【${TIERS[newLevel].label}】`, 'success');
+
+            syncStudentProfileToSheet(stu);
+        }
+
+        // One-click assign Volume 1 (e.g. A-b-1, B-a-1) for all students based on their saved competency levels
+        async function dispatchAllByCompetency() {
+            playSound('correct');
+            const catalog = getAvailableVolumeCatalog();
+            studentsDB.forEach(stu => {
+                const autoSets = [];
+                Object.keys(DOMAINS).forEach(dKey => {
+                    const dCode = DOMAIN_TO_CODE[dKey];
+                    const tCode = TIER_TO_CODE[stu.levels[dKey] || 'basic'];
+                    const targetVol1 = `${dCode}-${tCode}-1`;
+                    if (catalog.some(v => v.setId === targetVol1)) {
+                        autoSets.push(targetVol1);
+                    }
+                });
+                stu.assignedSets = autoSets;
+                syncStudentProfileToSheet(stu);
+            });
+            handleTeacherFilterChange();
+            showToast('已依全班「五向度能力值檔案」自動配發對應的各科第 1 卷！', 'success');
+        }
+
+        async function syncStudentProfileToSheet(stu) {
+            if (!GOOGLE_SHEET_WEB_APP_URL) return;
+            try {
+                await fetch(GOOGLE_SHEET_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'updateStudentProfile',
+                        studentId: stu.id,
+                        levels: stu.levels,
+                        assignedSets: (stu.assignedSets || []).join(', ')
+                    })
+                });
+            } catch (e) {}
+        }
+
+        function renderTeacherLogs(selectedDate, selectedVolume) {
+            const tbody = document.getElementById('teacher-logs-tbody');
+            const filtered = quizLogsDB.filter(l =>
+                l.date === selectedDate && (selectedVolume === 'all' || (l.setId || '') === selectedVolume)
+            );
+
+            document.getElementById('logs-count-badge').textContent = `共 ${filtered.length} 筆紀錄`;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-xs text-inklight">此日期／試卷篩選條件下尚無作答紀錄。</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.slice().reverse().map(log => {
+                const volInfo = parseVolumeCode(log.setId, log.domain, log.tier);
+                const dMeta = DOMAINS[volInfo.domain] || DOMAINS.vernacular;
+                const tMeta = TIERS[volInfo.tier] || TIERS.basic;
+                return `
+                    <tr class="hover:bg-paper/70">
+                        <td class="py-3 px-4 text-xs text-inklight font-mono">${log.date} ${log.time}</td>
+                        <td class="py-3 px-3 font-bold text-ink">${log.studentId} ${log.studentName}</td>
+                        <td class="py-3 px-3">
+                            <span class="px-2 py-0.5 rounded-md text-xs font-mono font-bold bg-ink text-white mr-1">${volInfo.setId}</span>
+                            <span class="px-2 py-0.5 rounded-md text-xs font-bold border ${dMeta.badgeClass}">${volInfo.shortTitle}</span>
+                        </td>
+                        <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-md text-xs font-bold border ${tMeta.pillClass}">${tMeta.label}</span></td>
+                        <td class="py-3 px-3 font-black ${log.score >= 80 ? 'text-sage' : 'text-terracotta'}">${log.score} 分 <span class="text-xs font-normal text-inklight">(${log.correctCount}/${log.totalQuestions})</span></td>
+                        <td class="py-3 px-4 text-[11px] text-inklight font-mono">${log.details}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Read-only Preview of Questions Synced from Google Sheets (Grouped / Filtered by Volume Code)
+        function renderSheetQuestionsPreview() {
+            const filter = document.getElementById('filter-sheet-domain').value;
+            const list = document.getElementById('sheet-questions-list');
+            const filtered = filter === 'all'
+                ? questionsDB.slice().sort((a, b) => (a.setId || '').localeCompare(b.setId || ''))
+                : questionsDB.filter(q => (q.setId || '') === filter);
+            const optLabels = ['A', 'B', 'C', 'D'];
+
+            list.innerHTML = filtered.map(q => {
+                const dMeta = DOMAINS[q.domain] || DOMAINS.vernacular;
+                const tMeta = TIERS[q.tier] || TIERS.basic;
+
+                return `
+                    <div class="p-4 rounded-xl bg-paper border border-sand space-y-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-black bg-ink text-white">${q.setId || '未編碼'}</span>
+                            <span class="text-xs font-mono font-bold text-inklight">${q.id}</span>
+                            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${dMeta.badgeClass}">${dMeta.short}</span>
+                            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${tMeta.pillClass}">${tMeta.label}</span>
+                            ${q.passage ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-sagelight text-sage"><i class="fa-solid fa-align-left mr-1"></i>附閱讀長文</span>` : ''}
+                        </div>
+                        ${q.passage ? `<div class="p-3 rounded-lg bg-white border border-sand/80 text-xs font-serif text-inklight line-clamp-3">${q.passage}</div>` : ''}
+                        <p class="font-serif font-bold text-ink text-sm">${q.text}</p>
+                        <p class="text-xs text-sage font-bold">
+                            正解：(${optLabels[q.answer]}) ${q.options[q.answer]}
+                        </p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Sync Question Bank & Student Roster from Google Sheets (doGet)
+        async function syncFromGoogleSheet(silent = false) {
+            if (!silent) playSound('click');
+            const icon = document.getElementById('sync-spin-icon');
+            if (icon) icon.classList.add('fa-spin');
+
+            if (!GOOGLE_SHEET_WEB_APP_URL) {
+                setTimeout(() => {
+                    if (icon) icon.classList.remove('fa-spin');
+                    if (currentUser && currentUser.role === 'teacher') renderTeacherDashboard();
+                    if (!silent) showToast('已重新整理內建三科分卷題庫（共 ' + questionsDB.length + ' 題）', 'info');
+                }, 400);
+                return;
+            }
+
+            try {
+                const res = await fetch(GOOGLE_SHEET_WEB_APP_URL);
+                const data = await res.json();
+                if (data.questions && data.questions.length > 0) questionsDB = data.questions;
+                if (data.students && data.students.length > 0) {
+                    studentsDB = data.students.map(normalizeStudentRecord);
+                }
+                if (data.logs && data.logs.length > 0) quizLogsDB = data.logs;
+                if (currentUser && currentUser.role === 'teacher') renderTeacherDashboard();
+                if (!silent) showToast(`已成功從 Google 試算表同步 ${questionsDB.length} 題題庫！`, 'success');
+            } catch (err) {
+                if (!silent) showToast('無法讀取試算表，請確認 Apps Script 網址與權限設定。', 'error');
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+            }
+        }
+
+        function exportCSV() {
+            playSound('click');
+            const selectedDate = document.getElementById('filter-date-select').value || TODAY_STR;
+            const selectedVolume = document.getElementById('filter-volume-select').value || 'all';
+            const logsToExport = quizLogsDB.filter(l =>
+                l.date === selectedDate && (selectedVolume === 'all' || (l.setId || '') === selectedVolume)
+            );
+
+            const headers = ['日期', '時間', '學號', '姓名', '試卷代號', '測驗分卷', '難度組別', '得分', '答對題數', '作答明細'];
+            const rows = logsToExport.map(l => {
+                const volInfo = parseVolumeCode(l.setId, l.domain, l.tier);
+                return [
+                    l.date, l.time, l.studentId, l.studentName,
+                    volInfo.setId, volInfo.shortTitle,
+                    TIERS[volInfo.tier]?.label || l.tier,
+                    l.score, `${l.correctCount}/${l.totalQuestions}`, `"${l.details}"`
+                ];
+            });
+            const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `文心研習室_${selectedDate.replace(/\//g, '-')}_分卷數據.csv`;
+            a.click();
+            showToast(`已匯出 ${selectedDate} 分卷成績報表`, 'success');
+        }
+
+        // ---------------------------------------------------------
+        // 7. SUBTLE UI FEEDBACK SOUNDS (Tone.js)
+        // ---------------------------------------------------------
+        let soundEnabled = true;
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('sound-icon');
+            if (icon) {
+                icon.className = soundEnabled ? 'fa-solid fa-volume-high text-sm' : 'fa-solid fa-volume-xmark text-sm text-rose-500';
+            }
+            showToast(soundEnabled ? '已開啟提示音效' : '已靜音', 'info');
+        }
+
+        function playSound(type) {
+            if (!soundEnabled || typeof Tone === 'undefined') return;
+            try {
+                if (Tone.context.state !== 'running') Tone.start();
+                const synth = new Tone.Synth({
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.01, decay: 0.1, sustain: 0.05, release: 0.15 }
+                }).toDestination();
+                synth.volume.value = -12;
+
+                if (type === 'click') synth.triggerAttackRelease('C5', '32n');
+                else if (type === 'correct') {
+                    synth.triggerAttackRelease('E5', '16n');
+                    setTimeout(() => synth.triggerAttackRelease('G5', '16n'), 70);
+                } else if (type === 'wrong') {
+                    synth.triggerAttackRelease('A3', '16n');
+                } else if (type === 'complete') {
+                    synth.triggerAttackRelease('C5', '16n');
+                    setTimeout(() => synth.triggerAttackRelease('E5', '16n'), 80);
+                    setTimeout(() => synth.triggerAttackRelease('G5', '8n'), 160);
+                }
+            } catch (e) {}
+        }
+    </script>
 </body>
 </html>
