@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國文閱讀理解適性練習系統</title>
+  <style>
+    body { font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; background-color: #f4f1ea; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; }
+    .card { background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    h1, h2 { color: #2c3e50; border-bottom: 2px solid #8c6d46; padding-bottom: 8px; }
+    .passage { background: #faf8f5; padding: 18px; border-left: 4px solid #8c6d46; white-space: pre-wrap; font-size: 1.05em; margin-bottom: 15px; }
+    input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin: 8px 0 16px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    button { background-color: #8c6d46; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+    button:hover { background-color: #705636; }
+    .option-label { display: block; padding: 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
+    .option-label:hover { background-color: #f9f6f0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background-color: #8c6d46; color: white; }
+    .hidden { display: none; }
+    .result-box { margin-top: 10px; padding: 10px; border-radius: 5px; }
+    .correct { background-color: #e8f5e9; color: #2e7d32; }
+    .wrong { background-color: #ffebee; color: #c62828; }
+  </style>
+</head>
+<body>
+
+  <!-- 登入畫面 -->
+  <div id="login-section" class="card">
+    <h1>國文閱讀理解練習平台</h1>
+    <label>學號（或教師帳號）：</label>
+    <input type="text" id="user-id" placeholder="請輸入學號">
+    <label>生日（密碼）：</label>
+    <input type="password" id="user-pw" placeholder="請輸入生日">
+    <button onclick="login()">登入系統</button>
+    <p id="login-msg" style="color: red;"></p>
+  </div>
+
+  <!-- 學生作答畫面 -->
+  <div id="student-section" class="hidden">
+    <div class="card">
+      <h2 id="student-welcome"></h2>
+      <p>系統已根據你的閱讀能力分級為你挑選以下文章與題目：</p>
+    </div>
+    <div id="quiz-container"></div>
+    <button id="submit-btn" onclick="submitAnswers()">送出所有答案</button>
+  </div>
+
+  <!-- 教師後台畫面 -->
+  <div id="teacher-section" class="card hidden">
+    <h2>教師管理後台 - 學生作答紀錄</h2>
+    <p>老師您好，以下是所有學生的即時作答紀錄（亦可直接開啟 Google 試算表檢視完整報表）：</p>
+    <div style="overflow-x:auto;">
+      <table id="records-table">
+        <thead>
+          <tr><th>作答時間</th><th>學號</th><th>姓名</th><th>題號</th><th>學生選項</th><th>結果</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbyV2avQAjSnry6G8ab2iRDPP2SqdrYhExcU3bSK3RKa-SZxDKSqtsP_dsE9LCl0e0pm6A/exec";
+  let currentUser = null;
+
+  async function login() {
+    const id = document.getElementById("user-id").value;
+    const pw = document.getElementById("user-pw").value;
+    const msg = document.getElementById("login-msg");
+    if (!id || !pw) { msg.innerText = "請輸入帳號與密碼"; return; }
+    
+    msg.innerText = "驗證身分與載入題庫中，請稍候...";
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "login", id: id, password: pw })
+      });
+      const data = await res.json();
+
+      if (data.status === "success") {
+        currentUser = data;
+        document.getElementById("login-section").classList.add("hidden");
+        if (data.role === "教師") {
+          renderTeacherView(data.records);
+        } else {
+          renderStudentView(data);
+        }
+      } else {
+        msg.innerText = data.message || "登入失敗";
+      }
+    } catch (err) {
+      msg.innerText = "連線發生錯誤，請檢查網路或網址設定。";
+    }
+  }
+
+  function renderStudentView(data) {
+    document.getElementById("student-section").classList.remove("hidden");
+    document.getElementById("student-welcome").innerText = `${data.name} 同學你好（目前能力分級：${data.level}）`;
+    const container = document.getElementById("quiz-container");
+    
+    if (data.questions.length === 0) {
+      container.innerHTML = "<div class='card'><p>目前此能力分級尚無題目，請通知老師新增。</p></div>";
+      document.getElementById("submit-btn").classList.add("hidden");
+      return;
+    }
+
+    data.questions.forEach((q, idx) => {
+      const qDiv = document.createElement("div");
+      qDiv.className = "card";
+      qDiv.innerHTML = `
+        <h3>第 ${idx + 1} 題：${q.title}</h3>
+        <div class="passage">${q.passage}</div>
+        <p><strong>題目：${q.question}</strong></p>
+        ${['A', 'B', 'C', 'D'].map(opt => `
+          <label class="option-label">
+            <input type="radio" name="q_${idx}" value="${opt}"> (${opt}) ${q.options[opt]}
+          </label>
+        `).join('')}
+        <div id="feedback_${idx}" class="result-box hidden"></div>
+      `;
+      container.appendChild(qDiv);
+    });
+  }
+
+  async function submitAnswers() {
+    const records = [];
+    currentUser.questions.forEach((q, idx) => {
+      const selected = document.querySelector(`input[name="q_${idx}"]:checked`);
+      const choice = selected ? selected.value : "未作答";
+      const isCorrect = (choice === q.answer);
+      
+      records.push({ qid: q.qid, choice: choice, isCorrect: isCorrect });
+
+      const fb = document.getElementById(`feedback_${idx}`);
+      fb.classList.remove("hidden");
+      fb.className = `result-box ${isCorrect ? 'correct' : 'wrong'}`;
+      fb.innerHTML = `<strong>${isCorrect ? '答對了！' : '答錯了，正確答案是 (' + q.answer + ')'}</strong><br>解析：${q.explanation}`;
+    });
+
+    document.getElementById("submit-btn").disabled = true;
+    document.getElementById("submit-btn").innerText = "成績傳送中...";
+
+    await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "submit",
+        id: currentUser.id,
+        name: currentUser.name,
+        records: records
+      })
+    });
+
+    document.getElementById("submit-btn").innerText = "作答紀錄已成功傳送給老師！";
+  }
+
+  function renderTeacherView(records) {
+    document.getElementById("teacher-section").classList.remove("hidden");
+    const tbody = document.querySelector("#records-table tbody");
+    records.reverse().forEach(row => {
+      const tr = document.createElement("tr");
+      const timeStr = new Date(row[0]).toLocaleString("zh-TW");
+      tr.innerHTML = `<td>${timeStr}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+</script>
+</body>
+</html>
