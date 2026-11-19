@@ -160,20 +160,14 @@
                         <i class="fa-solid fa-arrow-right"></i>
                     </button>
 
-                    <!-- Demo Quick Fill -->
-                    <div class="pt-4 border-t border-sand/80">
-                        <p class="text-[11px] font-bold text-inklight mb-2">測試帳號快速填入（不同分項能力組合）：</p>
-                        <div class="flex flex-wrap gap-1.5">
-                            <button type="button" onclick="fillDemoStudent('80101', '0512')" class="text-xs bg-paper hover:bg-sagelight hover:text-sage text-ink border border-sand px-2.5 py-1.5 rounded-lg font-medium transition">
-                                80101 林宇軒 (文言不派卷)
-                            </button>
-                            <button type="button" onclick="fillDemoStudent('80102', '0823')" class="text-xs bg-paper hover:bg-sagelight hover:text-sage text-ink border border-sand px-2.5 py-1.5 rounded-lg font-medium transition">
-                                80102 陳宥希 (三卷皆派)
-                            </button>
-                            <button type="button" onclick="fillDemoStudent('80103', '1104')" class="text-xs bg-paper hover:bg-sagelight hover:text-sage text-ink border border-sand px-2.5 py-1.5 rounded-lg font-medium transition">
-                                80103 張子晴 (三科精熟)
-                            </button>
-                        </div>
+                    <!-- Live Google Sheet Sync Status -->
+                    <div class="pt-4 border-t border-sand/80 flex items-center justify-between gap-2 text-xs">
+                        <span id="login-sync-status" class="text-inklight font-medium">
+                            <i class="fa-solid fa-circle-notch fa-spin text-sage mr-1"></i>正在連線至 Google 試算表...
+                        </span>
+                        <button type="button" onclick="syncFromGoogleSheet(false)" class="text-sage hover:underline font-bold shrink-0">
+                            重新讀取
+                        </button>
                     </div>
                 </form>
 
@@ -777,50 +771,14 @@
             return Array.from(map.values()).sort((a, b) => a.setId.localeCompare(b.setId));
         }
 
-        const TODAY_STR = '2026/11/19';
+        const TODAY_STR = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
 
-        // Junior High Students Roster:
-        // `levels` = Permanent 5-domain competency profile (NEVER lost when no exam is assigned!)
-        // `assignedSets` = Specific named volume codes assigned to this student right now (e.g. ['A-b-1', 'D-b-1'])
-        let studentsDB = [
-            {
-                id: '80101',
-                name: '林宇軒',
-                bday: '0512',
-                levels: { vernacular: 'intermediate', phonetics: 'basic', classical: 'basic', lesson: 'intermediate', sinology: 'basic' },
-                assignedSets: ['A-b-1', 'D-b-1']
-            },
-            {
-                id: '80102',
-                name: '陳宥希',
-                bday: '0823',
-                levels: { vernacular: 'advanced', phonetics: 'intermediate', classical: 'intermediate', lesson: 'advanced', sinology: 'intermediate' },
-                assignedSets: ['A-c-1', 'B-b-1', 'E-b-1']
-            },
-            {
-                id: '80103',
-                name: '張子晴',
-                bday: '1104',
-                levels: { vernacular: 'advanced', phonetics: 'advanced', classical: 'advanced', lesson: 'advanced', sinology: 'advanced' },
-                assignedSets: ['A-c-1', 'C-c-1']
-            },
-            {
-                id: '80104',
-                name: '王柏翔',
-                bday: '0219',
-                levels: { vernacular: 'basic', phonetics: 'basic', classical: 'basic', lesson: 'basic', sinology: 'basic' },
-                assignedSets: ['A-a-1', 'A-a-2']
-            },
-            {
-                id: '80105',
-                name: '李品妍',
-                bday: '0730',
-                levels: { vernacular: 'intermediate', phonetics: 'advanced', classical: 'basic', lesson: 'intermediate', sinology: 'intermediate' },
-                assignedSets: [] // Example: Teacher did NOT assign any test today, yet her `levels` remain intact!
-            }
-        ];
+        // Clean initial state (Populated directly from Google Sheet)
+        let studentsDB = [];
+        let questionsDB = [];
+        let quizLogsDB = [];
 
-        // Helper to normalize student records synced from Google Sheet
+        // Normalize student records synced from Google Sheet (handles leading-zero stripping like 0512 -> 512)
         function normalizeStudentRecord(stu) {
             const domainKeys = Object.keys(DOMAINS);
             if (!stu.levels) stu.levels = {};
@@ -834,168 +792,16 @@
                     stu.assignedSets = [];
                 }
             }
+            // Pad 3-digit numeric birthdays back to 4 digits (e.g. Sheet turns "0512" into 512)
+            let rawBday = String(stu.bday || '').trim();
+            if (/^\d{3}$/.test(rawBday)) {
+                rawBday = '0' + rawBday;
+            }
+            stu.bday = rawBday;
+            stu.id = String(stu.id || '').trim();
+            stu.name = String(stu.name || '').trim();
             return stu;
         }
-        studentsDB.forEach(normalizeStudentRecord);
-
-        // Built-in Junior High Question Bank with Multiple Named Volumes (A-a-1, A-a-2, A-b-1, A-c-1, B-a-1, etc.)
-        let questionsDB = [
-            // --- A-a-1：白話文閱讀・基礎・第1卷 ---
-            {
-                id: 'Q001', domain: 'vernacular', tier: 'basic', setId: 'A-a-1',
-                passage: '　　老茶師製茶從不看時鐘，他看的是茶菁葉緣捲曲的弧度，與指尖觸摸時傳來的微溫。\n　　「機器烘茶講求精準的溫度與秒數，卻讀不懂每一季雨水的脾氣。」老師傅撥開竹篩上微微發酵的茶葉，淡淡的清香隨風散開，「春茶水氣足，焙火要文；冬茶葉肉厚，火候得穩。茶跟人一樣，順著它的性子去引導，它才會把最甘甜的滋味留給你。」',
-                text: '根據本文，老師傅堅持不完全依賴機器製茶的主要原因為何？',
-                options: ['機器設備價格太過昂貴', '機器無法因應不同季節茶葉的特性與水氣變化靈活調整火候', '手工製茶的速度比機器更快', '年輕一輩不願意學習操作機器'],
-                answer: 1,
-                explanation: '老師傅提到「機器讀不懂每一季雨水的脾氣」，強調需依春茶、冬茶的不同特性靈活調整火候。',
-                assignedTo: []
-            },
-            {
-                id: 'Q002', domain: 'vernacular', tier: 'basic', setId: 'A-a-1',
-                passage: '　　老茶師製茶從不看時鐘，他看的是茶菁葉緣捲曲的弧度，與指尖觸摸時傳來的微溫。\n　　「機器烘茶講求精準的溫度與秒數，卻讀不懂每一季雨水的脾氣。」老師傅撥開竹篩上微微發酵的茶葉，淡淡的清香隨風散開，「春茶水氣足，焙火要文；冬茶葉肉厚，火候得穩。茶跟人一樣，順著它的性子去引導，它才會把最甘甜的滋味留給你。」',
-                text: '文末「順著它的性子去引導，它才會把最甘甜的滋味留給你」蘊含了什麼處世道理？',
-                options: ['凡事應該嚴格控制，不容許任何偏差', '對待萬物或與人相處，應尊重其特質並因勢利導，才能獲得美好回應', '只有經驗老到的人才能喝出好茶的滋味', '傳統工藝終究會被現代科技取代'],
-                answer: 1,
-                explanation: '作者由製茶之道延伸至待人處世，強調順應特質、耐心引導的重要性。',
-                assignedTo: []
-            },
-            // --- A-a-2：白話文閱讀・基礎・第2卷 ---
-            {
-                id: 'Q003', domain: 'vernacular', tier: 'basic', setId: 'A-a-2',
-                passage: '　　巷口那家修鞋鋪沒有招牌，只在木門旁掛了一只褪色的鐵皮信箱。老鞋匠戴著老花眼鏡，總先把客人送來的舊皮鞋擦拭乾淨，再細細端詳磨損的鞋跟。\n　　「一雙好鞋陪人走過多少路，鞋底的紋路最誠實。」老鞋匠一邊敲打鞋釘一邊說，「補鞋不只是把破洞填滿，而是讓走路的人重新找回踏實的重心。」',
-                text: '老鞋匠在動手修補前先將舊鞋擦拭乾淨並端詳鞋跟，展現了他什麼樣的工作態度？',
-                options: ['嫌棄客人的鞋子太髒', '對專業的敬重與細心觀察問題根源的職人精神', '想藉此拖延時間多收費用', '只願意修理昂貴的名牌皮鞋'],
-                answer: 1,
-                explanation: '老鞋匠透過觀察鞋底磨損找出走路重心偏移的原因，展現細膩敬業的職人態度。',
-                assignedTo: []
-            },
-            // --- A-b-1：白話文閱讀・進階・第1卷 ---
-            { id: 'Q004', domain: 'vernacular', tier: 'intermediate', setId: 'A-b-1', passage: '', text: '「真正的傾聽，並不是急著在對方話音剛落時給出建議，而是願意騰出一段安靜的空間，讓對方的情緒得以安放。」這段話最強調溝通中的哪一項態度？', options: ['迅速幫對方解決所有難題', '給予陪伴與同理的包容空間', '保持沉默以避免承擔責任', '用邏輯分析對方的錯誤'], answer: 1, explanation: '句中「騰出安靜空間、讓情緒得以安放」強調的是同理與陪伴，而非急於指導。', assignedTo: [] },
-            { id: 'Q005', domain: 'vernacular', tier: 'intermediate', setId: 'A-b-1', passage: '', text: '下列哪一個句子最能體現「逆境反而能淬鍊出人的韌性」？', options: ['順風順水的航行最能抵達遠方', '未經寒徹骨，焉得梅花撲鼻香', '溫室裡的花朵總是開得最鮮豔', '聰明的人懂得避開所有困難'], answer: 1, explanation: '「未經寒徹骨，焉得梅花撲鼻香」以梅花歷經嚴寒而綻放芬芳，比喻人歷經磨難方能成就。', assignedTo: [] },
-            // --- A-c-1：白話文閱讀・精熟・第1卷 ---
-            { id: 'Q006', domain: 'vernacular', tier: 'advanced', setId: 'A-c-1', passage: '', text: '「城市裡的高樓越蓋越高，人與人之間的窗戶卻越關越緊；我們在螢幕上擁有成千上萬的朋友，轉過身卻連鄰居的姓氏都叫不出來。」作者透過這段文字主要想表達什麼？', options: ['讚美現代建築技術的進步', '批評社群媒體完全沒有任何好處', '省思現代科技發達下，人際關係卻日趨疏離冷漠的矛盾現象', '呼籲大家搬離都市回到鄉村居住'], answer: 2, explanation: '透過「高樓高／窗戶緊」、「螢幕朋友多／不識鄰居」的強烈對比，點出現代人際疏離的現象。', assignedTo: [] },
-
-            // --- B-a-1 & B-b-1 & B-c-1：國字注音 ---
-            { id: 'Q007', domain: 'phonetics', tier: 'basic', setId: 'B-a-1', passage: '', text: '下列選項「 」中的字音，何者讀音完全相同？', options: ['「模」範／「模」樣', '「供」應／「供」奉', '「載」重／記「載」', '「參」加／「參」差'], answer: 2, explanation: '(C)皆讀作 ㄗㄞˋ。(A)ㄇㄛˊ／ㄇㄨˊ；(B)ㄍㄨㄥ／ㄍㄨㄥˋ；(D)ㄘㄢ／ㄘㄣ。', assignedTo: [] },
-            { id: 'Q008', domain: 'phonetics', tier: 'basic', setId: 'B-a-1', passage: '', text: '下列詞語中，哪一組完全「沒有」錯別字？', options: ['再接再勵', '迫不急待', '按部就班', '默不關心'], answer: 2, explanation: '(C)正確。(A)再接再「厲」；(B)迫不「及」待；(D)「漠」不關心。', assignedTo: [] },
-            { id: 'Q009', domain: 'phonetics', tier: 'intermediate', setId: 'B-b-1', passage: '', text: '「這座古剎歷經數百年風霜，殿內的壁畫已有些斑駁。」句中「剎」與「駁」的讀音依序為何？', options: ['ㄕㄚˋ ／ ㄅㄛˊ', 'ㄔㄚˋ ／ ㄅㄛˊ', 'ㄕㄚ ／ ㄅㄛˇ', 'ㄔㄚˋ ／ ㄅㄛˇ'], answer: 1, explanation: '古「剎」讀作 ㄔㄚˋ（指佛寺）；斑「駁」讀作 ㄅㄛˊ。', assignedTo: [] },
-            { id: 'Q010', domain: 'phonetics', tier: 'advanced', setId: 'B-c-1', passage: '', text: '下列各組「 」中的字音，何者兩兩相同？', options: ['「裨」補闕漏 ／ 偏「裨」將軍', '「載」歌載舞 ／ 怨聲「載」道', '「強」詞奪理 ／ 博聞「強」記', '「數」見不鮮 ／ 歷「數」家珍'], answer: 1, explanation: '(B)皆讀作 ㄗㄞˋ。(A)ㄅㄧˋ／ㄆㄧˊ；(C)ㄑㄧㄤˇ／ㄑㄧㄤˊ；(D)ㄕㄨㄛˋ／ㄕㄨˇ。', assignedTo: [] },
-
-            // --- C-a-1 & C-b-1 & C-c-1：文言文閱讀 ---
-            { id: 'Q011', domain: 'classical', tier: 'basic', setId: 'C-a-1', passage: '', text: '「學而時習之，不亦說乎？」句中的「說」字，通假為下列哪一個字？', options: ['說話的「說」', '喜悅的「悅」', '脫落的「脫」', '閱覽的「閱」'], answer: 1, explanation: '「說」在此為通假字，通「悅」，喜悅、愉快的意思。', assignedTo: [] },
-            { id: 'Q012', domain: 'classical', tier: 'basic', setId: 'C-a-1', passage: '', text: '「擇其善者而從之，其不善者而改之。」這句話主要勉勵我們抱持何種學習態度？', options: ['只跟比自己優秀的人做朋友', '見賢思齊，見不賢而內自省', '批評別人的缺點以顯示自己高明', '凡事順從他人的意見'], answer: 1, explanation: '選擇別人的優點學習，看到別人的缺點則自我省察改正。', assignedTo: [] },
-            {
-                id: 'Q013', domain: 'classical', tier: 'intermediate', setId: 'C-b-1',
-                passage: '　　曾子之妻之市，其子隨之而泣。其母曰：「女還，顧反為女殺彘。」適市來，曾子欲捕彘殺之。妻止之曰：「特與嬰兒戲耳。」曾子曰：「嬰兒非與戲也。嬰兒非有知也，待父母而學者也，聽父母之教。今子欺之，是教子欺也。母欺子，子而不信其母，非所以成教也。」遂烹彘也。',
-                text: '「曾子之妻之市」句中，兩個「之」字的詞性與意義依序為何？',
-                options: ['皆為代詞，指兒子', '皆為動詞，往、去的意思', '前者為助詞「的」，後者為動詞「往、去」', '前者為動詞「往、去」，後者為助詞「的」'],
-                answer: 2,
-                explanation: '曾子之（的，助詞）妻之（往、去，動詞）市（市場）。',
-                assignedTo: []
-            },
-            {
-                id: 'Q014', domain: 'classical', tier: 'intermediate', setId: 'C-b-1',
-                passage: '　　曾子之妻之市，其子隨之而泣。其母曰：「女還，顧反為女殺彘。」適市來，曾子欲捕彘殺之。妻止之曰：「特與嬰兒戲耳。」曾子曰：「嬰兒非與戲也。嬰兒非有知也，待父母而學者也，聽父母之教。今子欺之，是教子欺也。母欺子，子而不信其母，非所以成教也。」遂烹彘也。',
-                text: '曾子最後堅持「遂烹彘也」的主要原因為何？',
-                options: ['家裡剛好缺乏肉類食物', '認為父母必須言而有信，不能欺騙孩子，以免身教失當', '想懲罰妻子隨便亂開玩笑', '孩子哭鬧不休讓他感到心煩'],
-                answer: 1,
-                explanation: '曾子認為孩子會模仿父母的言行，若父母欺騙孩子，便是在教導孩子說謊，故堅持守信烹豬。',
-                assignedTo: []
-            },
-            { id: 'Q015', domain: 'classical', tier: 'advanced', setId: 'C-c-1', passage: '', text: '「不以物喜，不以己悲」這句名言運用了「互文」修辭，其完整正確的句意解釋為何？', options: ['不因為外物的好壞而高興，也不因為自己的得失而悲傷', '不因為外物的好壞和自己的得失而感到高興或悲傷', '不喜歡物質享受，也不為自己感到悲哀', '只有在獲得外物時才高興，失去時才悲傷'], answer: 1, explanation: '互文見義，上下句文意互相補充，意即「不因外在環境順逆或個人得失而動搖喜悲」。', assignedTo: [] },
-
-            // --- D-a-1 & D-b-1 & D-c-1：課文理解 ---
-            { id: 'Q016', domain: 'lesson', tier: 'basic', setId: 'D-a-1', passage: '', text: '朱自清《背影》一文中，作者一共描寫了幾次父親的背影，其中最令作者感動落淚的是哪一幕？', options: ['父親在車站與腳夫講價時的背影', '父親穿過鐵道、攀爬月台買橘子時的背影', '父親坐在車廂裡喝茶時的背影', '父親在家中寫信給兒子時的背影'], answer: 1, explanation: '《背影》共四寫背影，其中「望父買橘」攀爬月台的背影最刻骨銘心，展現深沉父愛。', assignedTo: [] },
-            { id: 'Q017', domain: 'lesson', tier: 'intermediate', setId: 'D-b-1', passage: '', text: '《木蘭詩》：「雄兔腳撲朔，雌兔眼迷離；雙兔傍地走，安能辨我是雄雌？」木蘭以此比喻什麼？', options: ['軍營裡的兔子跑得非常快', '自己在軍中女扮男裝十二年卻未被同伴識破的得意與自豪', '戰爭結束後想要回家飼養兔子', '男女生在戰場上的體力完全相同'], answer: 1, explanation: '以雙兔並跑難辨雌雄，巧妙比喻自己女扮男裝從軍多年卻無人察覺。', assignedTo: [] },
-            { id: 'Q018', domain: 'lesson', tier: 'advanced', setId: 'D-c-1', passage: '', text: '張釋之《張釋之執法》中，面對漢文帝想誅殺驚馬犯人，張釋之堅持僅處罰金，其核心論點為何？', options: ['犯人是皇親國戚，不能判重刑', '法律一旦制定便須天下共守，若隨君王喜怒輕重其罪，將使百姓無所適從', '漢文帝當時心情不好，過幾天就會忘記', '驚馬並未造成任何人員受傷'], answer: 1, explanation: '「法者，天子所與天下公共也」，強調司法公正與法律的穩定性、公信力。', assignedTo: [] },
-
-            // --- E-a-1 & E-b-1 & E-c-1：國學常識 ---
-            { id: 'Q019', domain: 'sinology', tier: 'basic', setId: 'E-a-1', passage: '', text: '下列關於《論語》一書的敘述，何者正確？', options: ['由孔子親自撰寫完成', '記錄孔子及其弟子的言行，屬於語錄體', '是道家學派最重要的經典', '全書共有五言絕句三百首'], answer: 1, explanation: '《論語》為孔子弟子及再傳弟子所輯錄，記錄孔子與弟子言行，為儒家重要經典。', assignedTo: [] },
-            { id: 'Q020', domain: 'sinology', tier: 'intermediate', setId: 'E-b-1', passage: '', text: '下列哪一位作家與其稱號的配對「錯誤」？', options: ['李白 —— 詩仙', '杜甫 —— 詩聖', '王維 —— 詩佛', '白居易 —— 詩鬼'], answer: 3, explanation: '白居易有「詩王」、「詩魔」之稱；「詩鬼」指的是中唐詩人李賀。', assignedTo: [] },
-            { id: 'Q021', domain: 'sinology', tier: 'advanced', setId: 'E-c-1', passage: '', text: '下列關於中國古代重要史書體例的配對，何者完全正確？', options: ['《史記》—— 紀傳體通史', '《資治通鑑》—— 紀傳體斷代史', '《漢書》—— 編年體通史', '《左傳》—— 國別體史書'], answer: 0, explanation: '(A)《史記》為紀傳體通史；(B)《資治通鑑》為編年體通史；(C)《漢書》為紀傳體斷代史；(D)《左傳》為編年體。', assignedTo: [] }
-        ];
-
-        // Per-Volume Quiz Logs (Includes `setId` so teachers can track A-a-1, A-b-1, etc.)
-        let quizLogsDB = [
-            {
-                date: '2026/11/19',
-                time: '08:15',
-                studentId: '80101',
-                studentName: '林宇軒',
-                setId: 'A-b-1',
-                domain: 'vernacular',
-                tier: 'intermediate',
-                score: 90,
-                correctCount: 9,
-                totalQuestions: 10,
-                details: 'Q004(O), Q005(O)...'
-            },
-            {
-                date: '2026/11/19',
-                time: '08:28',
-                studentId: '80101',
-                studentName: '林宇軒',
-                setId: 'D-b-1',
-                domain: 'lesson',
-                tier: 'intermediate',
-                score: 80,
-                correctCount: 8,
-                totalQuestions: 10,
-                details: 'Q017(O)...'
-            },
-            {
-                date: '2026/11/19',
-                time: '08:22',
-                studentId: '80102',
-                studentName: '陳宥希',
-                setId: 'A-c-1',
-                domain: 'vernacular',
-                tier: 'advanced',
-                score: 90,
-                correctCount: 9,
-                totalQuestions: 10,
-                details: 'Q006(O)...'
-            },
-            {
-                date: '2026/11/19',
-                time: '08:35',
-                studentId: '80102',
-                studentName: '陳宥希',
-                setId: 'E-b-1',
-                domain: 'sinology',
-                tier: 'intermediate',
-                score: 80,
-                correctCount: 8,
-                totalQuestions: 10,
-                details: 'Q020(O)...'
-            },
-            {
-                date: '2026/11/19',
-                time: '12:40',
-                studentId: '80103',
-                studentName: '張子晴',
-                setId: 'C-c-1',
-                domain: 'classical',
-                tier: 'advanced',
-                score: 90,
-                correctCount: 9,
-                totalQuestions: 10,
-                details: 'Q015(O)...'
-            },
-            {
-                date: '2026/11/18',
-                time: '16:10',
-                studentId: '80104',
-                studentName: '王柏翔',
-                setId: 'A-a-1',
-                domain: 'vernacular',
-                tier: 'basic',
-                score: 70,
-                correctCount: 7,
-                totalQuestions: 10,
-                details: 'Q001(O), Q002(X)...'
-            }
-        ];
 
         // App Session State
         let currentUser = null;
@@ -1117,15 +923,30 @@
             playSound('click');
             const inputId = document.getElementById('stu-id-input').value.trim();
             const inputBday = document.getElementById('stu-bday-input').value.trim();
+            const normalizedInputBday = /^\d{3}$/.test(inputBday) ? '0' + inputBday : inputBday;
 
-            const student = studentsDB.find(s =>
-                String(s.id).trim() === inputId &&
-                (String(s.bday).trim() === inputBday || String(s.bday).trim().endsWith(inputBday))
-            );
+            if (studentsDB.length === 0) {
+                playSound('wrong');
+                showToast('尚未從試算表讀取到學生名單，請稍候或按「重新讀取」確認試算表連線！', 'error');
+                return;
+            }
+
+            const student = studentsDB.find(s => {
+                const dbId = String(s.id).trim();
+                const dbBday = String(s.bday).trim();
+                const dbBdayNoZero = dbBday.replace(/^0+/, '');
+                const inputNoZero = inputBday.replace(/^0+/, '');
+                return dbId === inputId && (
+                    dbBday === inputBday ||
+                    dbBday === normalizedInputBday ||
+                    dbBday.endsWith(inputBday) ||
+                    (dbBdayNoZero !== '' && dbBdayNoZero === inputNoZero)
+                );
+            });
 
             if (!student) {
                 playSound('wrong');
-                showToast('學號或生日密碼不正確，請重新確認！', 'error');
+                showToast('學號或登入密碼不正確，請重新確認！', 'error');
                 return;
             }
 
@@ -2195,29 +2016,62 @@
         async function syncFromGoogleSheet(silent = false) {
             if (!silent) playSound('click');
             const icon = document.getElementById('sync-spin-icon');
+            const statusEl = document.getElementById('login-sync-status');
             if (icon) icon.classList.add('fa-spin');
+            if (statusEl) {
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-sage mr-1"></i>正在從試算表讀取資料...`;
+            }
 
             if (!GOOGLE_SHEET_WEB_APP_URL) {
-                setTimeout(() => {
-                    if (icon) icon.classList.remove('fa-spin');
-                    if (currentUser && currentUser.role === 'teacher') renderTeacherDashboard();
-                    if (!silent) showToast('已重新整理內建三科分卷題庫（共 ' + questionsDB.length + ' 題）', 'info');
-                }, 400);
+                if (icon) icon.classList.remove('fa-spin');
+                if (statusEl) statusEl.textContent = '尚未設定試算表網址';
                 return;
             }
 
             try {
-                const res = await fetch(GOOGLE_SHEET_WEB_APP_URL);
-                const data = await res.json();
-                if (data.questions && data.questions.length > 0) questionsDB = data.questions;
-                if (data.students && data.students.length > 0) {
-                    studentsDB = data.students.map(normalizeStudentRecord);
+                // Append cache-busting timestamp so browser always gets latest Sheet edits
+                const fetchUrl = `${GOOGLE_SHEET_WEB_APP_URL}${GOOGLE_SHEET_WEB_APP_URL.includes('?') ? '&' : '?'}t=${Date.now()}`;
+                const res = await fetch(fetchUrl, { method: 'GET', redirect: 'follow' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const text = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (parseErr) {
+                    throw new Error('回傳格式非 JSON（請確認 Apps Script 部署權限已設為「所有人」）');
                 }
-                if (data.logs && data.logs.length > 0) quizLogsDB = data.logs;
-                if (currentUser && currentUser.role === 'teacher') renderTeacherDashboard();
-                if (!silent) showToast(`已成功從 Google 試算表同步 ${questionsDB.length} 題題庫！`, 'success');
+
+                // Always assign arrays directly (even if empty, so stale data is cleared)
+                questionsDB = Array.isArray(data.questions) ? data.questions : [];
+                studentsDB = Array.isArray(data.students) ? data.students.map(normalizeStudentRecord) : [];
+                quizLogsDB = Array.isArray(data.logs) ? data.logs : [];
+
+                if (statusEl) {
+                    statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-sage mr-1"></i>已連線試算表（學生 ${studentsDB.length} 人・題庫 ${questionsDB.length} 題）`;
+                }
+
+                if (currentUser && currentUser.role === 'teacher') {
+                    renderTeacherDashboard();
+                } else if (currentUser && currentUser.role === 'student') {
+                    const updatedStu = studentsDB.find(s => s.id === currentUser.data.id);
+                    if (updatedStu) {
+                        currentUser.data = updatedStu;
+                        renderStudentLobby();
+                    }
+                }
+
+                if (!silent) {
+                    showToast(`同步完成：讀取到 ${studentsDB.length} 位學生、${questionsDB.length} 題題庫！`, 'success');
+                }
             } catch (err) {
-                if (!silent) showToast('無法讀取試算表，請確認 Apps Script 網址與權限設定。', 'error');
+                console.error('Google Sheet Sync Error:', err);
+                if (statusEl) {
+                    statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-terracotta mr-1"></i>試算表連線失敗（請檢查部署權限）`;
+                }
+                if (!silent) {
+                    showToast(`讀取失敗：${err.message}`, 'error');
+                }
             } finally {
                 if (icon) icon.classList.remove('fa-spin');
             }
