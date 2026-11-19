@@ -703,10 +703,11 @@
         // =========================================================
         const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzk8VEcw6Rgr2tGrabk2SAf79iNPKbHLZrubbXHf3rQF4sGtp5pK6pCokjd2j94TB3ANg/exec";
 
-        // 【教師帳號設定區】可在此自訂多組教師登入帳密
-        const TEACHER_ACCOUNTS = [
+        // 【教師帳號設定區】系統連線試算表後會自動讀取「教師帳號」分頁；若該分頁尚未建立或為空，則使用下方備用帳號
+        const DEFAULT_TEACHER_ACCOUNTS = [
             { user: "teacher", pass: "1234", name: "國文科教師" }
         ];
+        let teachersDB = [...DEFAULT_TEACHER_ACCOUNTS];
 
         // ---------------------------------------------------------
         // 2. VOLUME CODE PARSER (A-a-1 = 白話-基礎-第1卷) & METADATA
@@ -992,7 +993,9 @@
             const user = document.getElementById('teacher-user-input').value.trim();
             const pass = document.getElementById('teacher-pass-input').value.trim();
 
-            const matched = TEACHER_ACCOUNTS.find(t => t.user === user && t.pass === pass);
+            const matched = teachersDB.find(t =>
+                String(t.user).trim() === user && String(t.pass).trim() === pass
+            );
             if (!matched) {
                 playSound('wrong');
                 showToast('教師帳號或管理密碼錯誤！', 'error');
@@ -2250,6 +2253,13 @@
                 questionsDB = Array.isArray(data.questions) ? data.questions : [];
                 studentsDB = Array.isArray(data.students) ? data.students.map(normalizeStudentRecord) : [];
                 quizLogsDB = Array.isArray(data.logs) ? data.logs : [];
+                if (Array.isArray(data.teachers) && data.teachers.length > 0) {
+                    teachersDB = data.teachers.map(t => ({
+                        user: String(t.user || '').trim(),
+                        pass: String(t.pass || '').trim(),
+                        name: String(t.name || '教師').trim()
+                    }));
+                }
 
                 if (statusEl) {
                     statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-sage mr-1"></i>已連線試算表（學生 ${studentsDB.length} 人・題庫 ${questionsDB.length} 題）`;
