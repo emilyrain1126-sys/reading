@@ -180,19 +180,18 @@
 
                     <div>
                         <label class="block text-xs font-bold text-ink mb-1.5">教師帳號</label>
-                        <input type="text" id="teacher-user-input" required value="teacher" class="w-full px-4 py-3 rounded-xl bg-paper border border-sand focus:border-terracotta focus:bg-white focus:outline-none text-sm font-medium transition">
+                        <input type="text" id="teacher-user-input" required placeholder="請輸入教師帳號" class="w-full px-4 py-3 rounded-xl bg-paper border border-sand focus:border-terracotta focus:bg-white focus:outline-none text-sm font-medium transition">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-ink mb-1.5">管理密碼</label>
-                        <input type="password" id="teacher-pass-input" required value="1234" class="w-full px-4 py-3 rounded-xl bg-paper border border-sand focus:border-terracotta focus:bg-white focus:outline-none text-sm font-medium transition">
+                        <input type="password" id="teacher-pass-input" required placeholder="請輸入管理密碼" class="w-full px-4 py-3 rounded-xl bg-paper border border-sand focus:border-terracotta focus:bg-white focus:outline-none text-sm font-medium transition">
                     </div>
 
                     <button type="submit" class="btn-press w-full py-3.5 rounded-xl bg-terracotta hover:bg-orange-700 text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2">
                         <span>登入教師後台</span>
                         <i class="fa-solid fa-chart-line"></i>
                     </button>
-                    <p class="text-[11px] text-center text-inklight">預設體驗帳號：<code class="bg-paper px-1.5 py-0.5 rounded border border-sand">teacher</code> ／ 密碼：<code class="bg-paper px-1.5 py-0.5 rounded border border-sand">1234</code></p>
                 </form>
             </div>
         </section>
@@ -236,7 +235,7 @@
                         <i class="fa-solid fa-layer-group text-sage"></i>
                         今日適性分卷任務（依各項能力程度獨立出題）
                     </h3>
-                    <span class="text-xs text-inklight">若某項目顯示「今日不派卷」，則無需作答</span>
+                    <span class="text-xs text-inklight">完成教師指定試卷後，將自動解鎖「自主延伸練習題庫」</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="stu-domains-grid">
@@ -244,13 +243,40 @@
                 </div>
             </div>
 
+            <!-- Self-Directed Practice Library (Unlocked after completing assigned volumes) -->
+            <div id="stu-free-practice-section" class="hidden bg-white rounded-2xl border border-sand p-6 shadow-soft space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-base font-serif font-bold text-ink flex items-center gap-2">
+                            <i class="fa-solid fa-compass text-terracotta"></i>
+                            自主延伸練習區（已解鎖全部公開試卷）
+                        </h3>
+                        <p class="text-xs text-inklight mt-0.5">你已完成教師指定的試卷！現在可以自由挑選題庫中的其他試卷進行自主練習。</p>
+                    </div>
+                    <select id="stu-free-domain-filter" onchange="renderStudentFreePractice()" class="px-3 py-1.5 rounded-xl bg-paper border border-sand text-xs font-bold text-ink focus:outline-none">
+                        <option value="all">全部題型分類</option>
+                        <option value="vernacular">A 白話文閱讀</option>
+                        <option value="phonetics">B 國字注音</option>
+                        <option value="classical">C 文言文閱讀</option>
+                        <option value="lesson">D 課文理解</option>
+                        <option value="sinology">E 國學常識</option>
+                    </select>
+                </div>
+
+                <div id="stu-free-volumes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
             <!-- Recent Practice Logs -->
             <div class="bg-white rounded-2xl border border-sand p-6 shadow-soft">
-                <h3 class="text-base font-bold text-ink flex items-center gap-2 mb-4">
-                    <i class="fa-solid fa-clock-rotate-left text-slateaccent"></i>
-                    近期分卷作答紀錄
-                </h3>
-                <div id="stu-history-list" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <h3 class="text-base font-bold text-ink flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-slateaccent"></i>
+                        歷次分卷作答紀錄（點擊可檢視當時題目與解析）
+                    </h3>
+                </div>
+                <div id="stu-history-list" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
                     <!-- Filled dynamically -->
                 </div>
             </div>
@@ -639,6 +665,31 @@
     </div>
 
     <!-- ========================================================= -->
+    <!-- STUDENT HISTORY QUESTION REVIEW MODAL (檢視歷次作答題目明細) -->
+    <!-- ========================================================= -->
+    <div id="modal-history-detail" class="hidden fixed inset-0 z-50 bg-ink/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl border border-sand shadow-xl max-w-3xl w-full max-h-[88vh] flex flex-col overflow-hidden">
+            <div class="p-5 bg-paper border-b border-sand flex items-center justify-between shrink-0">
+                <div>
+                    <h3 id="hist-modal-title" class="text-base sm:text-lg font-serif font-bold text-ink">作答題目與解析回顧</h3>
+                    <p id="hist-modal-subtitle" class="text-xs text-inklight mt-0.5"></p>
+                </div>
+                <button onclick="closeHistoryDetailModal()" class="w-8 h-8 rounded-lg hover:bg-sand/50 text-inklight flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="hist-modal-body" class="p-5 sm:p-6 overflow-y-auto space-y-4">
+                <!-- Question-by-question breakdown injected via JS -->
+            </div>
+            <div class="p-4 bg-paper border-t border-sand flex justify-end shrink-0">
+                <button onclick="closeHistoryDetailModal()" class="btn-press px-5 py-2 rounded-xl bg-ink hover:bg-slate-800 text-white text-xs font-bold">
+                    關閉回顧視窗
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
     <!-- TOAST NOTIFICATION                                        -->
     <!-- ========================================================= -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
@@ -815,15 +866,9 @@
             currentIndex: 0,
             correctCount: 0,
             answeredCurrent: false,
-            records: []
+            records: [],
+            detailedItems: []
         };
-
-        // Automatically sync from Google Sheet on load if URL is configured
-        window.addEventListener('DOMContentLoaded', () => {
-            if (GOOGLE_SHEET_WEB_APP_URL) {
-                syncFromGoogleSheet(true);
-            }
-        });
 
         // ---------------------------------------------------------
         // 3. VIEW NAVIGATION, TOAST NOTIFICATIONS & AUTHENTICATION
@@ -912,156 +957,137 @@
             }
         }
 
-        function fillDemoStudent(id, bday) {
-            playSound('click');
-            document.getElementById('stu-id-input').value = id;
-            document.getElementById('stu-bday-input').value = bday;
-        }
-
         function handleStudentLogin(event) {
             event.preventDefault();
-            playSound('click');
-            const inputId = document.getElementById('stu-id-input').value.trim();
-            const inputBday = document.getElementById('stu-bday-input').value.trim();
-            const normalizedInputBday = /^\d{3}$/.test(inputBday) ? '0' + inputBday : inputBday;
+            const stuId = document.getElementById('stu-id-input').value.trim();
+            const stuPwd = document.getElementById('stu-bday-input').value.trim();
 
             if (studentsDB.length === 0) {
                 playSound('wrong');
-                showToast('尚未從試算表讀取到學生名單，請稍候或按「重新讀取」確認試算表連線！', 'error');
+                showToast('尚未讀取到學生名單，請稍候或點擊「重新讀取」連線試算表！', 'error');
                 return;
             }
 
-            const student = studentsDB.find(s => {
-                const dbId = String(s.id).trim();
-                const dbBday = String(s.bday).trim();
-                const dbBdayNoZero = dbBday.replace(/^0+/, '');
-                const inputNoZero = inputBday.replace(/^0+/, '');
-                return dbId === inputId && (
-                    dbBday === inputBday ||
-                    dbBday === normalizedInputBday ||
-                    dbBday.endsWith(inputBday) ||
-                    (dbBdayNoZero !== '' && dbBdayNoZero === inputNoZero)
-                );
-            });
+            const found = studentsDB.find(s =>
+                String(s.id).trim() === stuId &&
+                (String(s.bday).trim() === stuPwd || String(s.bday).trim().endsWith(stuPwd))
+            );
 
-            if (!student) {
+            if (!found) {
                 playSound('wrong');
-                showToast('學號或登入密碼不正確，請重新確認！', 'error');
+                showToast('學號或密碼不符，請重新確認！', 'error');
                 return;
             }
 
-            currentUser = { role: 'student', data: student };
+            currentUser = { role: 'student', data: found };
             updateNavUserPill();
+            playSound('correct');
+            showToast(`歡迎回來，${found.name} 同學`, 'success');
             renderStudentLobby();
             showView('view-student-lobby');
-            showToast(`歡迎回來，${student.name} 同學！`, 'success');
         }
 
         function handleTeacherLogin(event) {
             event.preventDefault();
-            playSound('click');
             const user = document.getElementById('teacher-user-input').value.trim();
             const pass = document.getElementById('teacher-pass-input').value.trim();
 
-            const account = TEACHER_ACCOUNTS.find(t => t.user === user && t.pass === pass);
-            if (!account) {
+            const matched = TEACHER_ACCOUNTS.find(t => t.user === user && t.pass === pass);
+            if (!matched) {
                 playSound('wrong');
-                showToast('教師帳號或密碼錯誤！', 'error');
+                showToast('教師帳號或管理密碼錯誤！', 'error');
                 return;
             }
 
-            currentUser = { role: 'teacher', data: account };
+            currentUser = { role: 'teacher', data: matched };
             updateNavUserPill();
+            playSound('correct');
+            showToast(`已登入${matched.name}管理後台`, 'success');
             renderTeacherDashboard();
             showView('view-teacher-dashboard');
-            showToast(`已登入教師管理後台（${account.name}）`, 'success');
         }
 
         function logout() {
             playSound('click');
             currentUser = null;
             updateNavUserPill();
+            document.getElementById('stu-bday-input').value = '';
+            document.getElementById('teacher-pass-input').value = '';
             showView('view-login');
             showToast('已安全登出系統', 'info');
         }
 
         function resetToHome() {
-            playSound('click');
             if (!currentUser) {
                 showView('view-login');
-            } else if (currentUser.role === 'student') {
-                renderStudentLobby();
-                showView('view-student-lobby');
-            } else {
+            } else if (currentUser.role === 'teacher') {
                 renderTeacherDashboard();
                 showView('view-teacher-dashboard');
+            } else {
+                renderStudentLobby();
+                showView('view-student-lobby');
             }
         }
 
         // ---------------------------------------------------------
-        // 5. STUDENT LOBBY & NAMED-VOLUME 10-QUESTION QUIZ ENGINE
+        // 4. STUDENT LOBBY: ASSIGNED VOLUMES, FREE PRACTICE & HISTORY
         // ---------------------------------------------------------
         function renderStudentLobby() {
-            const stu = studentsDB.find(s => s.id === currentUser.data.id);
-            currentUser.data = stu;
-
-            document.getElementById('stu-monogram').textContent = stu.name.charAt(0);
+            const stu = currentUser.data;
+            document.getElementById('stu-monogram').textContent = stu.name.charAt(0) || '學';
             document.getElementById('stu-welcome-name').textContent = `${stu.name} 同學`;
             document.getElementById('stu-id-badge').textContent = `學號 ${stu.id}`;
             document.getElementById('stu-today-date').textContent = TODAY_STR;
 
-            // Render ONLY the exact Named Volumes (`assignedSets`, e.g., A-a-1, D-b-1) assigned by teacher!
-            const domainsGrid = document.getElementById('stu-domains-grid');
-            const assignedList = stu.assignedSets || [];
+            const grid = document.getElementById('stu-domains-grid');
+            const assignedList = Array.isArray(stu.assignedSets) ? stu.assignedSets : [];
 
             if (assignedList.length === 0) {
-                domainsGrid.innerHTML = `
+                grid.innerHTML = `
                     <div class="col-span-full p-8 rounded-2xl bg-paper border border-sand text-center space-y-2">
-                        <div class="w-12 h-12 rounded-full bg-sagelight text-sage flex items-center justify-center mx-auto text-xl">
+                        <div class="w-12 h-12 rounded-xl bg-sagelight text-sage flex items-center justify-center mx-auto text-xl">
                             <i class="fa-solid fa-mug-hot"></i>
                         </div>
-                        <h4 class="font-serif font-bold text-base text-ink">今日無教師指定作答試卷</h4>
-                        <p class="text-xs text-inklight">目前沒有派發給你的指定卷別，你可以先瀏覽下方歷史作答紀錄。</p>
+                        <h4 class="text-base font-serif font-bold text-ink">今日無教師指定必作試卷</h4>
+                        <p class="text-xs text-inklight">你的五向度能力值紀錄均已完整保存，你也可以在下方「自主延伸練習區」自由挑選題庫練習。</p>
                     </div>
                 `;
             } else {
-                domainsGrid.innerHTML = assignedList.map(setCode => {
+                grid.innerHTML = assignedList.map(setCode => {
                     const volInfo = parseVolumeCode(setCode);
                     const dMeta = DOMAINS[volInfo.domain] || DOMAINS.vernacular;
                     const tMeta = TIERS[volInfo.tier] || TIERS.basic;
-
                     const attempts = quizLogsDB.filter(l => l.studentId === stu.id && l.setId === volInfo.setId);
                     const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
-                    const qCountInSet = questionsDB.filter(q => q.setId === volInfo.setId).length;
 
                     return `
-                        <div class="p-5 rounded-2xl bg-paper border border-sand hover:border-sage/50 transition flex flex-col justify-between gap-4">
+                        <div class="p-5 rounded-2xl bg-paper border border-sand hover:border-sage/60 transition flex flex-col justify-between gap-4">
                             <div>
                                 <div class="flex items-center justify-between gap-2 mb-2">
-                                    <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-black bg-ink text-white">
-                                        ${volInfo.setId}
-                                    </span>
-                                    <span class="px-2.5 py-0.5 rounded-md text-xs font-bold border ${tMeta.pillClass}">
-                                        ${tMeta.label}
-                                    </span>
+                                    <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-black bg-ink text-white">${volInfo.setId}</span>
+                                    <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${tMeta.pillClass}">${tMeta.label}</span>
                                 </div>
-                                <h4 class="text-base font-serif font-bold text-ink flex items-center gap-1.5 mt-1">
+                                <h4 class="text-base font-serif font-bold text-ink flex items-center gap-2">
                                     <i class="fa-solid ${dMeta.icon} text-sage"></i>
                                     ${volInfo.fullTitle}
                                 </h4>
-                                <p class="text-xs text-inklight mt-1">教師指定作答試卷（題庫收錄 ${qCountInSet} 題・每次 10 題）</p>
+                                <p class="text-xs text-inklight mt-1">教師指定任務・共 10 題</p>
                             </div>
 
                             <div class="space-y-2">
                                 ${latestAttempt ? `
-                                    <div class="flex items-center justify-between text-xs bg-sagelight/70 text-sage px-3 py-1.5 rounded-lg font-bold">
-                                        <span><i class="fa-solid fa-circle-check mr-1"></i>已完成 (${latestAttempt.date})</span>
-                                        <span>${latestAttempt.score} 分</span>
+                                    <div class="flex items-center justify-between text-xs bg-sagelight text-sage px-3 py-1.5 rounded-lg font-bold">
+                                        <span><i class="fa-solid fa-circle-check mr-1"></i>已完成作答</span>
+                                        <span>${latestAttempt.score} 分（${latestAttempt.correctCount}/${latestAttempt.totalQuestions}）</span>
                                     </div>
-                                ` : ''}
-                                <button onclick="startVolumeQuiz('${volInfo.setId}')" class="btn-press w-full py-2.5 rounded-xl ${latestAttempt ? 'bg-white hover:bg-sagelight text-sage border border-sage/40' : 'bg-sage hover:bg-teal-800 text-white shadow-sm'} font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                    <span>${latestAttempt ? `重新練習 ${volInfo.setId}` : `開始作答 ${volInfo.setId}`}</span>
+                                ` : `
+                                    <div class="text-xs text-terracotta bg-terralight/70 px-3 py-1.5 rounded-lg font-bold">
+                                        <i class="fa-regular fa-clock mr-1"></i>尚未完成本卷
+                                    </div>
+                                `}
+                                <button onclick="startVolumeQuiz('${volInfo.setId}')" class="btn-press w-full py-2.5 rounded-xl ${latestAttempt ? 'bg-white hover:bg-sagelight text-sage border border-sage/40' : 'bg-sage hover:bg-teal-800 text-white shadow-sm'} font-bold text-xs flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid ${latestAttempt ? 'fa-rotate-right' : 'fa-pen-nib'}"></i>
+                                    <span>${latestAttempt ? '再次練習本卷' : `開始作答 ${volInfo.setId}`}</span>
                                 </button>
                             </div>
                         </div>
@@ -1069,18 +1095,18 @@
                 }).join('');
             }
 
-            // Render Student's Past Records
+            // Render Student's Past Records (Clickable to review questions & explanations)
             const historyList = document.getElementById('stu-history-list');
             const myLogs = quizLogsDB.filter(log => log.studentId === stu.id);
             if (myLogs.length === 0) {
                 historyList.innerHTML = `<p class="text-xs text-inklight text-center py-6">尚無練習紀錄，請選擇上方指定試卷開始測驗。</p>`;
             } else {
-                historyList.innerHTML = myLogs.slice().reverse().map(log => {
+                historyList.innerHTML = myLogs.map((log, originalIdx) => ({ log, originalIdx })).reverse().map(({ log, originalIdx }) => {
                     const volInfo = parseVolumeCode(log.setId, log.domain, log.tier);
                     const dMeta = DOMAINS[volInfo.domain] || DOMAINS.vernacular;
                     const tMeta = TIERS[volInfo.tier] || TIERS.basic;
                     return `
-                        <div class="p-3.5 rounded-xl bg-paper border border-sand flex items-center justify-between gap-2">
+                        <div onclick="openHistoryDetailModal(${originalIdx})" class="cursor-pointer p-3.5 rounded-xl bg-paper hover:bg-sagelight/40 border border-sand hover:border-sage/50 transition flex items-center justify-between gap-2">
                             <div class="flex flex-wrap items-center gap-2">
                                 <span class="text-xs font-mono font-bold text-inklight">${log.date} ${log.time}</span>
                                 <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-ink text-white">${volInfo.setId}</span>
@@ -1088,11 +1114,177 @@
                                 <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${tMeta.pillClass}">${tMeta.label}</span>
                                 <span class="text-xs text-inklight">答對 ${log.correctCount}/${log.totalQuestions} 題</span>
                             </div>
-                            <span class="text-base sm:text-lg font-black ${log.score >= 80 ? 'text-sage' : 'text-terracotta'} shrink-0">${log.score} 分</span>
+                            <div class="flex items-center gap-2.5 shrink-0">
+                                <span class="text-base sm:text-lg font-black ${log.score >= 80 ? 'text-sage' : 'text-terracotta'}">${log.score} 分</span>
+                                <span class="text-xs font-bold text-sage bg-white px-2.5 py-1 rounded-lg border border-sand">
+                                    檢視題目 <i class="fa-solid fa-chevron-right text-[10px] ml-0.5"></i>
+                                </span>
+                            </div>
                         </div>
                     `;
                 }).join('');
             }
+
+            // Unlock Self-Directed Practice Library once all teacher-assigned volumes have been completed (or if none assigned)
+            const freeSection = document.getElementById('stu-free-practice-section');
+            const allAssignedCompleted = assignedList.every(setCode => {
+                const volInfo = parseVolumeCode(setCode);
+                return quizLogsDB.some(l => l.studentId === stu.id && l.setId === volInfo.setId);
+            });
+
+            if (freeSection) {
+                if (allAssignedCompleted && questionsDB.length > 0) {
+                    freeSection.classList.remove('hidden');
+                    renderStudentFreePractice();
+                } else {
+                    freeSection.classList.add('hidden');
+                }
+            }
+        }
+
+        // Render unlocked other volumes for self-directed student practice
+        function renderStudentFreePractice() {
+            const stu = currentUser.data;
+            const grid = document.getElementById('stu-free-volumes-grid');
+            const domainFilter = document.getElementById('stu-free-domain-filter')?.value || 'all';
+            if (!grid) return;
+
+            const assignedCodes = new Set((stu.assignedSets || []).map(c => parseVolumeCode(c).setId));
+            const catalog = getAvailableVolumeCatalog().filter(v =>
+                !assignedCodes.has(v.setId) &&
+                (domainFilter === 'all' || v.domain === domainFilter)
+            );
+
+            if (catalog.length === 0) {
+                grid.innerHTML = `<p class="col-span-full text-xs text-inklight text-center py-6">此分類目前無其他延伸練習卷。</p>`;
+                return;
+            }
+
+            grid.innerHTML = catalog.map(volInfo => {
+                const dMeta = DOMAINS[volInfo.domain] || DOMAINS.vernacular;
+                const tMeta = TIERS[volInfo.tier] || TIERS.basic;
+                const attempts = quizLogsDB.filter(l => l.studentId === stu.id && l.setId === volInfo.setId);
+                const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
+
+                return `
+                    <div class="p-4 rounded-2xl bg-paper border border-sand hover:border-terracotta/50 transition flex flex-col justify-between gap-3">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-1.5">
+                                <span class="px-2 py-0.5 rounded-md text-xs font-mono font-black bg-slateaccent text-white">${volInfo.setId}</span>
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${tMeta.pillClass}">${tMeta.label}</span>
+                            </div>
+                            <h4 class="text-sm font-serif font-bold text-ink flex items-center gap-1.5">
+                                <i class="fa-solid ${dMeta.icon} text-terracotta"></i>
+                                ${volInfo.fullTitle}
+                            </h4>
+                            <p class="text-[11px] text-inklight mt-1">自主延伸練習（題庫收錄 ${volInfo.count} 題）</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            ${latestAttempt ? `
+                                <div class="flex items-center justify-between text-[11px] bg-sagelight/70 text-sage px-2.5 py-1 rounded-lg font-bold">
+                                    <span><i class="fa-solid fa-check mr-1"></i>已自主練習</span>
+                                    <span>${latestAttempt.score} 分</span>
+                                </div>
+                            ` : ''}
+                            <button onclick="startVolumeQuiz('${volInfo.setId}')" class="btn-press w-full py-2 rounded-xl bg-white hover:bg-terralight text-terracotta border border-terracotta/40 font-bold text-xs flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-play"></i>
+                                <span>自主練習 ${volInfo.setId}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Open modal showing every question, student's chosen answer, correct answer & explanation from a past log
+        function openHistoryDetailModal(logIndex) {
+            playSound('click');
+            const log = quizLogsDB[logIndex];
+            if (!log) return;
+
+            const volInfo = parseVolumeCode(log.setId, log.domain, log.tier);
+            document.getElementById('hist-modal-title').textContent = `${volInfo.setId}｜${volInfo.fullTitle}`;
+            document.getElementById('hist-modal-subtitle').textContent = `作答時間：${log.date} ${log.time} ・ 得分：${log.score} 分（答對 ${log.correctCount}/${log.totalQuestions} 題）`;
+
+            const optLabels = ['A', 'B', 'C', 'D'];
+            const body = document.getElementById('hist-modal-body');
+
+            // Case 1: Full session items recorded in current browser session
+            if (Array.isArray(log.detailedItems) && log.detailedItems.length > 0) {
+                body.innerHTML = log.detailedItems.map((item, idx) => `
+                    <div class="p-4 rounded-xl border ${item.isCorrect ? 'bg-sagelight/30 border-sage/30' : 'bg-terralight/30 border-terracotta/30'} space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-inklight">第 ${idx + 1} 題（題號 ${item.questionId}）</span>
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-bold ${item.isCorrect ? 'bg-sagelight text-sage' : 'bg-terralight text-terracotta'}">
+                                ${item.isCorrect ? '<i class="fa-solid fa-circle-check mr-1"></i>答對' : '<i class="fa-solid fa-circle-xmark mr-1"></i>答錯'}
+                            </span>
+                        </div>
+                        ${item.passage ? `<div class="p-3 rounded-lg bg-white border border-sand text-xs font-serif text-inklight whitespace-pre-line">${item.passage}</div>` : ''}
+                        <p class="font-serif font-bold text-sm text-ink">${item.text}</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                            ${(item.options || []).map((opt, oIdx) => {
+                                const isAns = oIdx === item.answer;
+                                const isChosen = oIdx === item.selectedIndex;
+                                let cls = 'bg-white border-sand text-inklight';
+                                if (isAns) cls = 'bg-sagelight border-sage text-sage font-bold';
+                                else if (isChosen && !isAns) cls = 'bg-terralight border-terracotta text-terracotta font-bold';
+                                return `<div class="p-2 rounded-lg border ${cls}">(${optLabels[oIdx]}) ${opt} ${isAns ? '【正解】' : isChosen ? '【你的作答】' : ''}</div>`;
+                            }).join('')}
+                        </div>
+                        ${item.explanation ? `<p class="text-xs text-inklight bg-white/80 p-2.5 rounded-lg border border-sand/80"><strong class="text-ink">解析：</strong>${item.explanation}</p>` : ''}
+                    </div>
+                `).join('');
+            } else {
+                // Case 2: Reconstruct questions from Google Sheet `作答明細` string (e.g. "Q001(O), Q002(X)") + `questionsDB`
+                const tokens = String(log.details || '').split(',').map(s => s.trim()).filter(Boolean);
+                if (tokens.length === 0) {
+                    body.innerHTML = `<p class="text-xs text-inklight text-center py-6">此筆歷史紀錄未包含逐題明細。</p>`;
+                } else {
+                    body.innerHTML = tokens.map((tok, idx) => {
+                        const match = tok.match(/^(.+?)\(([OX])\)$/i);
+                        const qId = match ? match[1].trim() : tok;
+                        const isCorrect = match ? match[2].toUpperCase() === 'O' : false;
+                        const qObj = questionsDB.find(q => String(q.id).trim() === qId);
+
+                        if (!qObj) {
+                            return `
+                                <div class="p-3.5 rounded-xl bg-paper border border-sand flex items-center justify-between text-xs">
+                                    <span class="font-mono font-bold text-ink">第 ${idx + 1} 題（題號 ${qId}）</span>
+                                    <span class="font-bold ${isCorrect ? 'text-sage' : 'text-terracotta'}">${isCorrect ? '答對 (O)' : '答錯 (X)'}</span>
+                                </div>
+                            `;
+                        }
+
+                        return `
+                            <div class="p-4 rounded-xl border ${isCorrect ? 'bg-sagelight/30 border-sage/30' : 'bg-terralight/30 border-terracotta/30'} space-y-2.5">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-xs font-bold text-inklight">第 ${idx + 1} 題（題號 ${qObj.id}）</span>
+                                    <span class="px-2.5 py-0.5 rounded-md text-xs font-bold ${isCorrect ? 'bg-sagelight text-sage' : 'bg-terralight text-terracotta'}">
+                                        ${isCorrect ? '<i class="fa-solid fa-circle-check mr-1"></i>答對' : '<i class="fa-solid fa-circle-xmark mr-1"></i>答錯'}
+                                    </span>
+                                </div>
+                                ${qObj.passage ? `<div class="p-3 rounded-lg bg-white border border-sand text-xs font-serif text-inklight whitespace-pre-line">${qObj.passage}</div>` : ''}
+                                <p class="font-serif font-bold text-sm text-ink">${qObj.text}</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                                    ${qObj.options.map((opt, oIdx) => {
+                                        const isAns = oIdx === qObj.answer;
+                                        return `<div class="p-2 rounded-lg border ${isAns ? 'bg-sagelight border-sage text-sage font-bold' : 'bg-white border-sand text-inklight'}">(${optLabels[oIdx]}) ${opt} ${isAns ? '【正解】' : ''}</div>`;
+                                    }).join('')}
+                                </div>
+                                ${qObj.explanation ? `<p class="text-xs text-inklight bg-white/80 p-2.5 rounded-lg border border-sand/80"><strong class="text-ink">解析：</strong>${qObj.explanation}</p>` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            document.getElementById('modal-history-detail').classList.remove('hidden');
+        }
+
+        function closeHistoryDetailModal() {
+            playSound('click');
+            document.getElementById('modal-history-detail').classList.add('hidden');
         }
 
         function returnToStudentLobby() {
@@ -1227,7 +1419,8 @@
                 currentIndex: 0,
                 correctCount: 0,
                 answeredCurrent: false,
-                records: []
+                records: [],
+                detailedItems: []
             };
 
             showView('view-quiz');
@@ -1303,6 +1496,16 @@
             }
 
             activeQuiz.records.push(`${q.id}(${isCorrect ? 'O' : 'X'})`);
+            activeQuiz.detailedItems.push({
+                questionId: q.id,
+                passage: q.passage || '',
+                text: q.text,
+                options: q.options,
+                answer: q.answer,
+                selectedIndex,
+                isCorrect,
+                explanation: q.explanation || ''
+            });
 
             q.options.forEach((_, idx) => {
                 const btn = document.getElementById(`opt-btn-${idx}`);
@@ -1374,7 +1577,8 @@
                 score,
                 correctCount: activeQuiz.correctCount,
                 totalQuestions: total,
-                details: activeQuiz.records.join(', ')
+                details: activeQuiz.records.join(', '),
+                detailedItems: [...activeQuiz.detailedItems]
             };
 
             quizLogsDB.push(recordPayload);
@@ -2141,6 +2345,11 @@
                 }
             } catch (e) {}
         }
+
+        // Automatically sync from Google Sheet on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            syncFromGoogleSheet(true);
+        });
     </script>
 </body>
 </html>
