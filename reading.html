@@ -163,10 +163,10 @@
                     <!-- Live Google Sheet Sync Status -->
                     <div class="pt-4 border-t border-sand/80 flex items-center justify-between gap-2 text-xs">
                         <span id="login-sync-status" class="text-inklight font-medium">
-                            <i class="fa-solid fa-circle-notch fa-spin text-sage mr-1"></i>正在連線至 Google 試算表...
+                            <i class="fa-solid fa-circle-notch fa-spin text-sage mr-1"></i>資料準備中...
                         </span>
                         <button type="button" onclick="syncFromGoogleSheet(false)" class="text-sage hover:underline font-bold shrink-0">
-                            重新讀取
+                            重新整理
                         </button>
                     </div>
                 </form>
@@ -2187,66 +2187,113 @@
             }).join('');
         }
 
-        // Read-only Preview of Questions Synced from Google Sheets (Grouped / Filtered by Volume Code)
         function renderSheetQuestionsPreview() {
-            const filter = document.getElementById('filter-sheet-domain').value;
-            const list = document.getElementById('sheet-questions-list');
-            const filtered = filter === 'all'
-                ? questionsDB.slice().sort((a, b) => (a.setId || '').localeCompare(b.setId || ''))
-                : questionsDB.filter(q => (q.setId || '') === filter);
+            const container = document.getElementById('sheet-questions-list');
+            const filterSelect = document.getElementById('filter-sheet-domain');
+            if (!container) return;
+
+            const selectedSet = filterSelect ? filterSelect.value : 'all';
+            const filtered = selectedSet === 'all'
+                ? questionsDB
+                : questionsDB.filter(q => (q.setId || '').trim() === selectedSet);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<p class="col-span-full text-xs text-inklight text-center py-8">此篩選條件下尚無題庫題目，請於 Google 試算表「題庫」分頁新增題目後點擊「同步試算表」。</p>`;
+                return;
+            }
+
             const optLabels = ['A', 'B', 'C', 'D'];
-
-            list.innerHTML = filtered.map(q => {
-                const dMeta = DOMAINS[q.domain] || DOMAINS.vernacular;
-                const tMeta = TIERS[q.tier] || TIERS.basic;
-
+            container.innerHTML = filtered.map(q => {
+                const volInfo = parseVolumeCode(q.setId, q.domain, q.tier);
+                const dMeta = DOMAINS[volInfo.domain] || DOMAINS.vernacular;
+                const tMeta = TIERS[volInfo.tier] || TIERS.basic;
                 return `
                     <div class="p-4 rounded-xl bg-paper border border-sand space-y-2">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono font-black bg-ink text-white">${q.setId || '未編碼'}</span>
-                            <span class="text-xs font-mono font-bold text-inklight">${q.id}</span>
-                            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${dMeta.badgeClass}">${dMeta.short}</span>
-                            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${tMeta.pillClass}">${tMeta.label}</span>
-                            ${q.passage ? `<span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-sagelight text-sage"><i class="fa-solid fa-align-left mr-1"></i>附閱讀長文</span>` : ''}
+                        <div class="flex flex-wrap items-center justify-between gap-1.5">
+                            <div class="flex items-center gap-1.5">
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-ink text-white">${volInfo.setId}</span>
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${dMeta.badgeClass}">${dMeta.short}</span>
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${tMeta.pillClass}">${tMeta.short}</span>
+                            </div>
+                            <span class="text-[11px] font-mono text-inklight">題號：${q.id}</span>
                         </div>
-                        ${q.passage ? `<div class="p-3 rounded-lg bg-white border border-sand/80 text-xs font-serif text-inklight line-clamp-3">${q.passage}</div>` : ''}
-                        <p class="font-serif font-bold text-ink text-sm">${q.text}</p>
-                        <p class="text-xs text-sage font-bold">
-                            正解：(${optLabels[q.answer]}) ${q.options[q.answer]}
-                        </p>
+                        ${q.passage ? `<p class="text-xs font-serif text-inklight bg-white p-2.5 rounded-lg border border-sand line-clamp-3">${q.passage}</p>` : ''}
+                        <p class="text-sm font-serif font-bold text-ink">${q.text}</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
+                            ${(q.options || []).map((opt, idx) => `
+                                <div class="px-2.5 py-1 rounded-md border ${idx === q.answer ? 'bg-sagelight border-sage text-sage font-bold' : 'bg-white border-sand/80 text-inklight'}">
+                                    (${optLabels[idx]}) ${opt}
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // Sync Question Bank & Student Roster from Google Sheets (doGet)
+        // Sync Question Bank & Student Roster from Google Sheets (doGet + JSONP fallback)
+        function fetchGoogleSheetViaJsonp(url) {
+            return new Promise((resolve, reject) => {
+                const cbName = '__gsheet_cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+                const script = document.createElement('script');
+                const timer = setTimeout(() => {
+                    cleanup();
+                    reject(new Error('連線逾時（請確認 Apps Script 部署權限已設為「所有人」）'));
+                }, 10000);
+
+                function cleanup() {
+                    clearTimeout(timer);
+                    delete window[cbName];
+                    if (script.parentNode) script.parentNode.removeChild(script);
+                }
+
+                window[cbName] = function(payload) {
+                    cleanup();
+                    resolve(payload);
+                };
+
+                script.onerror = function() {
+                    cleanup();
+                    reject(new Error('無法載入 Apps Script 回應（請確認部署網址與權限）'));
+                };
+
+                const sep = url.includes('?') ? '&' : '?';
+                script.src = `${url}${sep}callback=${cbName}&t=${Date.now()}`;
+                document.body.appendChild(script);
+            });
+        }
+
         async function syncFromGoogleSheet(silent = false) {
             if (!silent) playSound('click');
             const icon = document.getElementById('sync-spin-icon');
             const statusEl = document.getElementById('login-sync-status');
             if (icon) icon.classList.add('fa-spin');
             if (statusEl) {
-                statusEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-sage mr-1"></i>正在從試算表讀取資料...`;
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-sage mr-1"></i>資料準備中...`;
             }
 
             if (!GOOGLE_SHEET_WEB_APP_URL) {
                 if (icon) icon.classList.remove('fa-spin');
-                if (statusEl) statusEl.textContent = '尚未設定試算表網址';
+                if (statusEl) statusEl.textContent = '';
                 return;
             }
 
             try {
-                // Append cache-busting timestamp so browser always gets latest Sheet edits
-                const fetchUrl = `${GOOGLE_SHEET_WEB_APP_URL}${GOOGLE_SHEET_WEB_APP_URL.includes('?') ? '&' : '?'}t=${Date.now()}`;
-                const res = await fetch(fetchUrl, { method: 'GET', redirect: 'follow' });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-                const text = await res.text();
-                let data;
+                let data = null;
                 try {
+                    // 1. Standard fetch with cache-busting timestamp
+                    const fetchUrl = `${GOOGLE_SHEET_WEB_APP_URL}${GOOGLE_SHEET_WEB_APP_URL.includes('?') ? '&' : '?'}t=${Date.now()}`;
+                    const res = await fetch(fetchUrl, { method: 'GET', redirect: 'follow' });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const text = await res.text();
                     data = JSON.parse(text);
-                } catch (parseErr) {
-                    throw new Error('回傳格式非 JSON（請確認 Apps Script 部署權限已設為「所有人」）');
+                } catch (fetchErr) {
+                    // 2. Fallback to JSONP if sandboxed iframe blocks cross-origin redirect
+                    data = await fetchGoogleSheetViaJsonp(GOOGLE_SHEET_WEB_APP_URL);
+                }
+
+                if (data && data.error) {
+                    throw new Error(data.error);
                 }
 
                 // Always assign arrays directly (even if empty, so stale data is cleared)
@@ -2262,7 +2309,7 @@
                 }
 
                 if (statusEl) {
-                    statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-sage mr-1"></i>已連線試算表（學生 ${studentsDB.length} 人・題庫 ${questionsDB.length} 題）`;
+                    statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-sage mr-1"></i>資料準備就緒`;
                 }
 
                 if (currentUser && currentUser.role === 'teacher') {
@@ -2276,15 +2323,14 @@
                 }
 
                 if (!silent) {
-                    showToast(`同步完成：讀取到 ${studentsDB.length} 位學生、${questionsDB.length} 題題庫！`, 'success');
+                    showToast('資料已更新完成', 'success');
                 }
             } catch (err) {
-                console.error('Google Sheet Sync Error:', err);
                 if (statusEl) {
-                    statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-terracotta mr-1"></i>試算表連線失敗（請檢查部署權限）`;
+                    statusEl.textContent = '';
                 }
-                if (!silent) {
-                    showToast(`讀取失敗：${err.message}`, 'error');
+                if (!silent && currentUser && currentUser.role === 'teacher') {
+                    showToast('目前無法同步試算表，請稍後再試', 'info');
                 }
             } finally {
                 if (icon) icon.classList.remove('fa-spin');
