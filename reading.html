@@ -236,20 +236,26 @@
           </div>
         </div>
 
-        <div id="quiz-passage-box" class="hidden mb-6 p-4 sm:p-5 rounded-xl bg-[#FAF8F3] border border-[#E5DFD3]">
-          <div class="text-xs font-bold text-[#8A795D] mb-2">📖 閱讀文本</div>
-          <div id="quiz-passage-content" class="text-sm sm:text-base leading-relaxed text-[#2C3539] whitespace-pre-line font-serif-tc"></div>
+        <!-- 長文本閱讀區（支援自動分段、限高獨立捲動與國文閱讀黃金行距） -->
+        <div id="quiz-passage-box" class="hidden mb-6 rounded-xl bg-[#FAF8F3] border border-[#E5DFD3] overflow-hidden">
+          <div class="px-4 py-2.5 bg-[#F2EFE9] border-b border-[#E5DFD3] flex items-center justify-between">
+            <span class="text-xs font-bold text-[#6E5F46]">📖 閱讀文本</span>
+            <span class="text-[11px] text-slate-500">若文章較長，可於框內上下滑動閱讀</span>
+          </div>
+          <div id="quiz-passage-content"
+            class="p-4 sm:p-5 max-h-72 sm:max-h-80 overflow-y-auto text-[15px] sm:text-base leading-[1.85] tracking-[0.03em] text-[#2C3539] whitespace-pre-line break-words font-serif-tc">
+          </div>
         </div>
 
         <div class="mb-6">
-          <h3 id="quiz-question-text" class="text-base sm:text-lg font-bold text-[#2C3539] leading-relaxed">題目載入中...</h3>
+          <h3 id="quiz-question-text" class="text-base sm:text-lg font-bold text-[#2C3539] leading-relaxed break-words">題目載入中...</h3>
         </div>
 
         <div id="quiz-options-list" class="space-y-3 mb-6"></div>
 
         <div id="quiz-feedback-box" class="hidden mb-6 p-4 rounded-xl border text-sm">
           <div id="quiz-feedback-header" class="font-bold mb-1"></div>
-          <p id="quiz-feedback-explanation" class="text-slate-700 leading-relaxed"></p>
+          <p id="quiz-feedback-explanation" class="text-slate-700 leading-relaxed whitespace-pre-line break-words"></p>
         </div>
 
         <div class="flex justify-end">
@@ -552,7 +558,7 @@
 
   <script>
     // =========================================================
-    // 1. Google Apps Script 部署網址設定（已更新為您的最新部署連結）
+    // 1. Google Apps Script 部署網址設定
     // =========================================================
     const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby64rLzRsuLBxuzbMUfmeIug-ajdJ05OkAiZUvHc1LzctJ-lx7AX-HOf92aDzBd_LWuJA/exec";
 
@@ -1061,16 +1067,16 @@
                   : `<span class="text-[11px] text-slate-400">正解：${optLabels[q.answer]}</span>`
                 }
               </div>
-              ${q.passage ? `<div class="p-2.5 mb-2 rounded-lg bg-white/80 border border-[#E6E2D8] text-xs text-slate-600 font-serif-tc leading-relaxed">${q.passage}</div>` : ''}
-              <div class="text-sm font-bold text-[#2C3539] mb-2">${q.text}</div>
+              ${q.passage ? `<div class="p-3 mb-2.5 max-h-48 overflow-y-auto rounded-lg bg-white/90 border border-[#E6E2D8] text-xs sm:text-sm text-slate-700 font-serif-tc leading-[1.8] tracking-[0.02em] whitespace-pre-line break-words">${q.passage}</div>` : ''}
+              <div class="text-sm font-bold text-[#2C3539] mb-2 break-words">${q.text}</div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs mb-2.5">
                 ${q.options.map((opt, oi) => `
-                  <div class="px-2.5 py-1.5 rounded-lg border ${oi === q.answer ? 'bg-emerald-100/70 border-emerald-400 font-bold text-emerald-900' : 'bg-white border-slate-200 text-slate-600'}">
+                  <div class="px-2.5 py-1.5 rounded-lg border break-words ${oi === q.answer ? 'bg-emerald-100/70 border-emerald-400 font-bold text-emerald-900' : 'bg-white border-slate-200 text-slate-600'}">
                     (${optLabels[oi]}) ${opt}
                   </div>
                 `).join('')}
               </div>
-              <div class="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-[#ECE8DF]">
+              <div class="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-[#ECE8DF] whitespace-pre-line break-words leading-relaxed">
                 <span class="font-bold text-[#3B6E6C]">解析：</span>${q.explanation || '無補充解析'}
               </div>
             </div>
@@ -1177,9 +1183,11 @@
       document.getElementById('quiz-progress-bar').style.width = `${pct}%`;
 
       const passageBox = document.getElementById('quiz-passage-box');
+      const passageContent = document.getElementById('quiz-passage-content');
       if (q.passage && q.passage.trim() !== '') {
         passageBox.classList.remove('hidden');
-        document.getElementById('quiz-passage-content').textContent = q.passage;
+        passageContent.textContent = q.passage.trim();
+        passageContent.scrollTop = 0; // 切換題目時自動將閱讀框捲軸回到頂部
       } else {
         passageBox.classList.add('hidden');
       }
@@ -1194,7 +1202,7 @@
           <span class="w-6 h-6 rounded-full bg-[#F2EFE9] text-[#2C3539] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
             ${optLabels[idx]}
           </span>
-          <span class="text-sm sm:text-base text-[#2C3539]">${opt}</span>
+          <span class="text-sm sm:text-base text-[#2C3539] break-words">${opt}</span>
         </button>
       `).join('');
 
@@ -1325,12 +1333,12 @@
         return `
           <div class="p-3.5 rounded-xl border ${ans.isCorrect ? 'border-emerald-200 bg-emerald-50/40' : 'border-rose-200 bg-rose-50/40'} text-xs">
             <div class="flex items-center justify-between font-bold mb-1">
-              <span class="text-[#2C3539]">第 ${idx + 1} 題：${q.text}</span>
+              <span class="text-[#2C3539] break-words">第 ${idx + 1} 題：${q.text}</span>
               <span class="${ans.isCorrect ? 'text-emerald-700' : 'text-rose-700'} shrink-0 ml-2">
                 ${ans.isCorrect ? '✓ 正確' : `✕ 選 ${optLabels[ans.selectedIndex]}（正 ${optLabels[q.answer]}）`}
               </span>
             </div>
-            <p class="text-slate-600 leading-relaxed">解析：${q.explanation || '無補充解析'}</p>
+            <p class="text-slate-600 leading-relaxed whitespace-pre-line break-words">解析：${q.explanation || '無補充解析'}</p>
           </div>
         `;
       }).join('');
