@@ -300,7 +300,6 @@
 
     <!-- ==================== 5. 教師管理後台 ==================== -->
     <section id="view-teacher-dashboard" class="hidden space-y-6">
-      <!-- 頂部工具列與班級/日期篩選 -->
       <div class="card-paper rounded-2xl p-4 sm:p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div class="flex flex-wrap items-center gap-2">
           <button id="t-tab-daily" onclick="switchTeacherTab('daily')"
@@ -368,7 +367,6 @@
           </div>
         </div>
 
-        <!-- 依班級群組與能力值・批次派發指定回次控制台 -->
         <div class="card-paper rounded-2xl p-5 bg-[#F8FAF9] border-[#D3E0DD]">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
             <div>
@@ -415,7 +413,6 @@
           </div>
         </div>
 
-        <!-- 學生名單與個別三段式派卷、當日表現總表 -->
         <div class="card-paper rounded-2xl overflow-hidden">
           <div class="px-5 py-4 border-b border-[#E6E2D8] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">學生個別派卷與當日作答狀態</h3>
@@ -436,7 +433,6 @@
           </div>
         </div>
 
-        <!-- 該日作答明細紀錄表 -->
         <div class="card-paper rounded-2xl overflow-hidden">
           <div class="px-5 py-4 border-b border-[#E6E2D8]">
             <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">當日交卷詳細紀錄</h3>
@@ -603,26 +599,14 @@
     };
 
     // =========================================================
-    // 2. Google 試算表雙向同步
+    // 2. Google 試算表高速同步（直接走 JSONP，免等待 fetch 逾時）
     // =========================================================
-    async function syncFromGoogleSheet(showAlert = false) {
+    function syncFromGoogleSheet(showAlert = false) {
       const statusEl = document.getElementById('sheet-sync-status');
       if (statusEl) {
         statusEl.innerHTML = `<span class="text-slate-500">⏳ 正在連線試算表...</span>`;
       }
-
-      try {
-        const res = await fetch(`${GOOGLE_SHEET_WEB_APP_URL}?t=${Date.now()}`, {
-          method: 'GET',
-          redirect: 'follow'
-        });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        if (data.error) throw new Error();
-        applySheetData(data, showAlert);
-      } catch (err) {
-        fetchGoogleSheetViaJsonp(showAlert);
-      }
+      fetchGoogleSheetViaJsonp(showAlert);
     }
 
     function fetchGoogleSheetViaJsonp(showAlert) {
@@ -640,7 +624,7 @@
           statusEl.innerHTML = `<span class="text-[#C86D51] font-medium">⚠️ 試算表連線失敗</span>`;
         }
         if (showAlert) showToast('試算表連線失敗，請稍後再試');
-      }, 8000);
+      }, 6000);
 
       window[cbName] = function(data) {
         if (finished) return;
@@ -809,7 +793,6 @@
       showToast(`已登入教師管理後台（${matched.name}）`);
     }
 
-    // 只要學生的「任一所屬群組」或「學號」符合該老師的負責範圍，就能看到該生
     function getAuthorizedStudents() {
       const teacher = currentUser?.data;
       if (!teacher || !teacher.scope || teacher.scope === 'ALL') {
@@ -1717,3 +1700,93 @@
     }
 
     function renderTeacherProfilesTable() {
+      const tbody = document.getElementById('t-profiles-tbody');
+      const authStudents = getAuthorizedStudents();
+
+      if (authStudents.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-xs text-slate-400">權限範圍內尚無學生資料。</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = authStudents.map(stu => `
+        <tr class="hover:bg-[#FAF9F6]">
+          <td class="py-3.5 px-4">
+            <div class="font-bold text-[#2C3539]">${stu.name}</div>
+            <div class="text-[11px] text-slate-400">${stu.id}</div>
+          </td>
+          <td class="py-3.5 px-4">
+            <input type="text" value="${(stu.classGroups || ['未分班']).join(', ')}"
+              onchange="updateStudentClassGroup('${stu.id}', this.value)"
+              placeholder="例如：801, 閱讀加強班"
+              class="w-40 px-2.5 py-1 rounded-lg border border-[#DCD7CD] bg-[#FAF9F6] focus:bg-white text-xs font-semibold text-[#2C3539]" />
+          </td>
+          ${Object.keys(DOMAINS).map(dKey => {
+            const curTier = stu.levels[dKey] || 'basic';
+            return `
+              <td class="py-3.5 px-4">
+                <select onchange="updateStudentPermanentLevel('${stu.id}', '${dKey}', this.value)"
+                  class="px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${TIERS[curTier].badgeClass}">
+                  <option value="basic" ${curTier === 'basic' ? 'selected' : ''}>基礎組</option>
+                  <option value="intermediate" ${curTier === 'intermediate' ? 'selected' : ''}>進階組</option>
+                  <option value="advanced" ${curTier === 'advanced' ? 'selected' : ''}>精熟組</option>
+                </select>
+              </td>
+            `;
+          }).join('')}
+        </tr>
+      `).join('');
+    }
+
+    function updateStudentClassGroup(studentId, newGroupsStr) {
+      const stu = studentsDB.find(s => String(s.id) === String(studentId));
+      if (!stu) return;
+      const parsed = String(newGroupsStr || '')
+        .split(/[,，]/)
+        .map(g => g.trim())
+        .filter(Boolean);
+      stu.classGroups = parsed.length > 0 ? parsed : ['未分班'];
+      syncStudentProfileToSheet(stu);
+      populateTeacherClassFilter();
+      showToast(`已更新 ${stu.name} 的所屬群組為「${stu.classGroups.join('、')}」`);
+    }
+
+    function updateStudentPermanentLevel(studentId, domainKey, newTier) {
+      const stu = studentsDB.find(s => String(s.id) === String(studentId));
+      if (!stu) return;
+      stu.levels[domainKey] = newTier;
+      syncStudentProfileToSheet(stu);
+      renderTeacherProfilesTable();
+      showToast(`已更新 ${stu.name} 的「${DOMAINS[domainKey].name}」為${TIERS[newTier].name}`);
+    }
+
+    function syncStudentProfileToSheet(stu) {
+      postToGoogleSheet({
+        action: 'updateStudentProfile',
+        studentId: stu.id,
+        classGroup: (stu.classGroups || ['未分班']).join(', '),
+        levels: stu.levels,
+        assignedSets: (stu.assignedSets || []).join(', ')
+      });
+    }
+
+    // =========================================================
+    // 8. 全域提示訊息與啟動初始化
+    // =========================================================
+    let toastTimer = null;
+    function showToast(msg) {
+      const box = document.getElementById('toast-box');
+      const text = document.getElementById('toast-msg');
+      text.textContent = msg;
+      box.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        box.classList.add('hidden');
+      }, 3200);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      syncFromGoogleSheet(false);
+    });
+  </script>
+</body>
+</html>
