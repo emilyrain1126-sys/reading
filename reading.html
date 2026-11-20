@@ -30,15 +30,6 @@
     .btn-primary:hover {
       background-color: #2F5856;
     }
-    .btn-accent {
-      background-color: #C86D51;
-      color: #FFFFFF;
-      transition: all 0.2s ease;
-    }
-    .btn-accent:hover {
-      background-color: #B25B40;
-    }
-    /* 自訂捲軸 */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -67,9 +58,7 @@
         </div>
       </div>
 
-      <div id="nav-user-area" class="flex items-center gap-2 sm:gap-3">
-        <!-- 登入後動態顯示使用者資訊與按鈕 -->
-      </div>
+      <div id="nav-user-area" class="flex items-center gap-2 sm:gap-3"></div>
     </div>
   </header>
 
@@ -87,7 +76,6 @@
           <p class="text-sm text-slate-500 mt-1">請選擇身分並輸入帳號密碼開始今日課程</p>
         </div>
 
-        <!-- 身分切換頁籤 -->
         <div class="grid grid-cols-2 bg-[#F2EFE9] p-1 rounded-xl mb-6">
           <button id="tab-student-btn" onclick="switchLoginTab('student')" class="py-2 text-sm font-semibold rounded-lg bg-white text-[#3B6E6C] shadow-sm transition">
             學生登入
@@ -131,7 +119,7 @@
           </button>
         </form>
 
-        <!-- 底部試算表連線狀態列（僅顯示簡潔狀態，不顯示技術原因） -->
+        <!-- 底部試算表連線狀態列 -->
         <div class="mt-6 pt-4 border-t border-[#ECE8DF] flex items-center justify-between text-xs">
           <div id="sheet-sync-status">
             <span class="text-slate-500">⏳ 正在連線試算表...</span>
@@ -143,24 +131,21 @@
       </div>
     </section>
 
-    <!-- ==================== 2. 學生主頁（指定試卷 + 歷次紀錄 + 自主練習） ==================== -->
+    <!-- ==================== 2. 學生主頁 ==================== -->
     <section id="view-student-lobby" class="hidden space-y-6">
-      <!-- 學生個人資訊與五向度能力標籤 -->
       <div class="card-paper rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div class="flex items-center gap-2.5">
-            <span class="px-2.5 py-0.5 rounded-md bg-[#F0F5F4] text-[#3B6E6C] text-xs font-semibold" id="stu-badge-id">學號</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-md bg-[#F0F5F4] text-[#3B6E6C] text-xs font-semibold" id="stu-badge-class">班級</span>
+            <span class="px-2.5 py-0.5 rounded-md bg-[#F2EFE9] text-slate-700 text-xs font-semibold" id="stu-badge-id">學號</span>
             <h2 class="font-serif-tc text-xl sm:text-2xl font-bold text-[#2C3539]" id="stu-welcome-name">同學你好</h2>
           </div>
           <p class="text-xs text-slate-500 mt-1.5">以下為老師依你的學習進度派發的指定試卷，完成後可隨時回顧解析或進行自主延伸練習。</p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2" id="stu-level-badges">
-          <!-- 動態顯示五科目前能力值徽章 -->
-        </div>
+        <div class="flex flex-wrap items-center gap-2" id="stu-level-badges"></div>
       </div>
 
-      <!-- 教師指定試卷區 -->
       <div>
         <div class="flex items-center justify-between mb-3">
           <h3 class="font-serif-tc text-lg font-bold text-[#2C3539] flex items-center gap-2">
@@ -169,12 +154,10 @@
           </h3>
           <span class="text-xs text-slate-500" id="stu-assigned-progress">今日進度：0 / 0 卷</span>
         </div>
-        <div id="stu-assigned-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- 動態產生指定試卷卡片 -->
-        </div>
+        <div id="stu-assigned-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
 
-      <!-- 自主延伸練習區（完成所有指定卷後解鎖） -->
+      <!-- 自主延伸練習區 -->
       <div id="stu-free-practice-wrapper" class="hidden pt-2">
         <div class="bg-[#F4F8F7] border border-[#CFE0DD] rounded-2xl p-5 sm:p-6">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
@@ -197,13 +180,11 @@
               </select>
             </div>
           </div>
-          <div id="stu-free-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            <!-- 動態產生自主練習試卷卡片 -->
-          </div>
+          <div id="stu-free-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
         </div>
       </div>
 
-      <!-- 學生歷次作答紀錄（可點擊查看當時題目與解析） -->
+      <!-- 學生歷次作答紀錄 -->
       <div class="pt-2">
         <div class="flex items-center justify-between mb-3">
           <h3 class="font-serif-tc text-lg font-bold text-[#2C3539] flex items-center gap-2">
@@ -225,9 +206,7 @@
                   <th class="py-3 px-4 font-semibold text-right">操作</th>
                 </tr>
               </thead>
-              <tbody id="stu-history-tbody" class="divide-y divide-[#EFECE6]">
-                <!-- 動態填入學生歷次作答紀錄 -->
-              </tbody>
+              <tbody id="stu-history-tbody" class="divide-y divide-[#EFECE6]"></tbody>
             </table>
           </div>
         </div>
@@ -237,12 +216,9 @@
     <!-- ==================== 3. 測驗作答畫面 ==================== -->
     <section id="view-quiz" class="hidden max-w-3xl mx-auto">
       <div class="card-paper rounded-2xl p-5 sm:p-8">
-        <!-- 頂部進度與返回 -->
         <div class="flex items-center justify-between pb-4 mb-5 border-b border-[#ECE8DF]">
           <div>
-            <span id="quiz-set-badge" class="inline-block px-2.5 py-0.5 rounded-md bg-[#F0F5F4] text-[#3B6E6C] text-xs font-bold mb-1">
-              A-a-1
-            </span>
+            <span id="quiz-set-badge" class="inline-block px-2.5 py-0.5 rounded-md bg-[#F0F5F4] text-[#3B6E6C] text-xs font-bold mb-1">A-a-1</span>
             <h2 id="quiz-title" class="font-serif-tc text-lg sm:text-xl font-bold text-[#2C3539]">白話文閱讀・基礎・第1卷</h2>
           </div>
           <button onclick="abortQuiz()" class="text-xs text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg border border-[#E0DBD1]">
@@ -250,7 +226,6 @@
           </button>
         </div>
 
-        <!-- 進度條 -->
         <div class="mb-6">
           <div class="flex justify-between text-xs font-medium text-slate-500 mb-1.5">
             <span id="quiz-progress-text">第 1 題 / 共 10 題</span>
@@ -261,33 +236,22 @@
           </div>
         </div>
 
-        <!-- 長文本閱讀區（若該題有閱讀文本才顯示） -->
         <div id="quiz-passage-box" class="hidden mb-6 p-4 sm:p-5 rounded-xl bg-[#FAF8F3] border border-[#E5DFD3]">
-          <div class="text-xs font-bold text-[#8A795D] mb-2 flex items-center gap-1.5">
-            <span>📖 閱讀文本</span>
-          </div>
+          <div class="text-xs font-bold text-[#8A795D] mb-2">📖 閱讀文本</div>
           <div id="quiz-passage-content" class="text-sm sm:text-base leading-relaxed text-[#2C3539] whitespace-pre-line font-serif-tc"></div>
         </div>
 
-        <!-- 題幹 -->
         <div class="mb-6">
-          <h3 id="quiz-question-text" class="text-base sm:text-lg font-bold text-[#2C3539] leading-relaxed">
-            題目載入中...
-          </h3>
+          <h3 id="quiz-question-text" class="text-base sm:text-lg font-bold text-[#2C3539] leading-relaxed">題目載入中...</h3>
         </div>
 
-        <!-- 四個選項 -->
-        <div id="quiz-options-list" class="space-y-3 mb-6">
-          <!-- 動態產生選項按鈕 -->
-        </div>
+        <div id="quiz-options-list" class="space-y-3 mb-6"></div>
 
-        <!-- 即時回饋與解析（選完答案後顯示） -->
         <div id="quiz-feedback-box" class="hidden mb-6 p-4 rounded-xl border text-sm">
           <div id="quiz-feedback-header" class="font-bold mb-1"></div>
           <p id="quiz-feedback-explanation" class="text-slate-700 leading-relaxed"></p>
         </div>
 
-        <!-- 底部下一題按鈕 -->
         <div class="flex justify-end">
           <button id="quiz-next-btn" onclick="nextQuizQuestion()" disabled
             class="btn-primary px-6 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
@@ -304,7 +268,7 @@
           成
         </div>
         <h2 class="font-serif-tc text-2xl font-bold text-[#2C3539]" id="result-set-title">測驗完成</h2>
-        <p class="text-xs text-slate-500 mt-1" id="result-sync-note">作答成績與明細已同步記錄至學習歷程</p>
+        <p class="text-xs text-slate-500 mt-1">作答成績與明細已同步記錄至學習歷程</p>
 
         <div class="grid grid-cols-3 gap-3 max-w-md mx-auto my-6">
           <div class="p-3.5 rounded-xl bg-[#FAF9F6] border border-[#E6E2D8]">
@@ -321,12 +285,9 @@
           </div>
         </div>
 
-        <!-- 本次逐題詳解列表 -->
         <div class="text-left mt-6 pt-6 border-t border-[#ECE8DF]">
           <h3 class="font-serif-tc text-base font-bold text-[#2C3539] mb-3">逐題作答檢討與解析</h3>
-          <div id="result-review-list" class="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-            <!-- 動態產生逐題檢討 -->
-          </div>
+          <div id="result-review-list" class="space-y-3 max-h-[420px] overflow-y-auto pr-1"></div>
         </div>
 
         <div class="mt-6 pt-4 border-t border-[#ECE8DF] flex justify-center gap-3">
@@ -339,20 +300,30 @@
 
     <!-- ==================== 5. 教師管理後台 ==================== -->
     <section id="view-teacher-dashboard" class="hidden space-y-6">
-      <!-- 頂部工具列與分頁切換 -->
-      <div class="card-paper rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <!-- 頂部工具列與班級/日期篩選 -->
+      <div class="card-paper rounded-2xl p-4 sm:p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div class="flex flex-wrap items-center gap-2">
           <button id="t-tab-daily" onclick="switchTeacherTab('daily')"
             class="px-4 py-2 rounded-xl text-sm font-semibold bg-[#3B6E6C] text-white transition">
-            每日分卷成績與派卷管理
+            班級分卷成績與群組派卷
           </button>
           <button id="t-tab-profiles" onclick="switchTeacherTab('profiles')"
             class="px-4 py-2 rounded-xl text-sm font-semibold bg-[#F2EFE9] text-slate-700 hover:bg-[#E7E2D8] transition">
-            學生五向度能力值檔案
+            學生能力值與班級歸屬
           </button>
+          <span id="teacher-scope-badge" class="px-2.5 py-1 rounded-lg bg-[#FAF8F3] border border-[#E5DFD3] text-[11px] font-medium text-[#8A795D]">
+            權限範圍：全部班級
+          </span>
         </div>
 
         <div id="teacher-filter-bar" class="flex flex-wrap items-center gap-2.5">
+          <div class="flex items-center gap-1.5">
+            <label class="text-xs font-semibold text-slate-600">班級群組：</label>
+            <select id="t-filter-class" onchange="renderTeacherDashboard()"
+              class="px-3 py-1.5 rounded-lg border border-[#DCD7CD] bg-[#FAF9F6] text-xs font-semibold text-[#3B6E6C]">
+              <option value="all">全部授權班級</option>
+            </select>
+          </div>
           <div class="flex items-center gap-1.5">
             <label class="text-xs font-semibold text-slate-600">日期：</label>
             <select id="t-filter-date" onchange="renderTeacherDashboard()"
@@ -360,10 +331,10 @@
             </select>
           </div>
           <div class="flex items-center gap-1.5">
-            <label class="text-xs font-semibold text-slate-600">分卷檢視：</label>
+            <label class="text-xs font-semibold text-slate-600">分卷：</label>
             <select id="t-filter-domain" onchange="renderTeacherDashboard()"
               class="px-3 py-1.5 rounded-lg border border-[#DCD7CD] bg-[#FAF9F6] text-xs font-medium text-[#2C3539]">
-              <option value="all">全部分卷總覽</option>
+              <option value="all">全部分卷</option>
               <option value="vernacular">A 白話文閱讀</option>
               <option value="phonetics">B 國字注音</option>
               <option value="classical">C 文言文閱讀</option>
@@ -378,12 +349,12 @@
         </div>
       </div>
 
-      <!-- 分頁 1：每日分卷成績與派卷管理 -->
+      <!-- 分頁 1：每日分卷成績與群組派卷管理 -->
       <div id="t-panel-daily" class="space-y-6">
         <!-- 當日數據摘要卡 -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div class="card-paper rounded-2xl p-4">
-            <div class="text-xs text-slate-500">當日完成人次</div>
+            <div class="text-xs text-slate-500">範圍內完成人次</div>
             <div class="text-2xl font-bold text-[#2C3539] mt-1" id="kpi-completed">0 人</div>
             <div class="text-[11px] text-slate-400 mt-0.5" id="kpi-date-label">--</div>
           </div>
@@ -393,19 +364,22 @@
             <div class="text-[11px] text-slate-400 mt-0.5" id="kpi-domain-label">全部分卷</div>
           </div>
           <div class="card-paper rounded-2xl p-4 col-span-2">
-            <div class="text-xs text-slate-500 mb-1.5">當日五向度各科平均分</div>
-            <div id="kpi-domain-averages" class="grid grid-cols-5 gap-1.5 text-center text-xs">
-              <!-- 動態顯示五科當日平均 -->
-            </div>
+            <div class="text-xs text-slate-500 mb-1.5">當日五向度各科平均分（依目前選定班級）</div>
+            <div id="kpi-domain-averages" class="grid grid-cols-5 gap-1.5 text-center text-xs"></div>
           </div>
         </div>
 
-        <!-- 依全班能力值・批次派發指定回次控制台 -->
+        <!-- 依班級群組與能力值・批次派發指定回次控制台 -->
         <div class="card-paper rounded-2xl p-5 bg-[#F8FAF9] border-[#D3E0DD]">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
             <div>
-              <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">全班依能力值・批次派發指定回次</h3>
-              <p class="text-xs text-slate-500 mt-0.5">勾選今日要考的項目與第幾卷，系統將依每位學生的永久能力值自動配發對應難度試卷（如 A-a-1、A-b-1）。</p>
+              <div class="flex items-center gap-2">
+                <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">依班級群組與能力值・批次統一派卷</h3>
+                <span id="batch-target-class-badge" class="px-2 py-0.5 rounded bg-[#3B6E6C] text-white text-[11px] font-semibold">
+                  對象：全部授權學生
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">操作將套用至上方「班級群組」目前選定的群組，依學生各自永久能力值自動配發對應難度試卷。</p>
             </div>
             <div class="flex items-center gap-2">
               <select id="batch-round-select" class="px-3 py-2 rounded-xl border border-[#C8D5D2] bg-white text-xs font-semibold text-[#2C3539]">
@@ -416,7 +390,7 @@
                 <option value="append">累加至現有派卷</option>
               </select>
               <button onclick="executeBatchDispatch()" class="btn-primary px-4 py-2 rounded-xl text-xs font-semibold shrink-0">
-                一鍵全班派發
+                群組統一派發
               </button>
             </div>
           </div>
@@ -436,8 +410,8 @@
             <label class="inline-flex items-center gap-1.5 cursor-pointer font-medium text-slate-700">
               <input type="checkbox" class="batch-domain-cb accent-[#3B6E6C]" value="sinology" /> E 國學常識
             </label>
-            <button type="button" onclick="clearAllAssignedSets()" class="ml-auto text-[#C86D51] hover:underline font-medium">
-              清空全班派卷（今日不派卷）
+            <button type="button" onclick="clearGroupAssignedSets()" class="ml-auto text-[#C86D51] hover:underline font-medium">
+              清空目前群組派卷（今日不派卷）
             </button>
           </div>
         </div>
@@ -445,22 +419,20 @@
         <!-- 學生名單與個別三段式派卷、當日表現總表 -->
         <div class="card-paper rounded-2xl overflow-hidden">
           <div class="px-5 py-4 border-b border-[#E6E2D8] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">全班個別派卷與當日作答狀態</h3>
+            <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">學生個別派卷與當日作答狀態</h3>
             <span class="text-xs text-slate-500">可針對個別學生依「題型 → 等級 → 卷別」逐步新增指定試卷</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
               <thead>
                 <tr class="bg-[#F6F4EF] border-b border-[#E6E2D8] text-xs text-slate-600">
-                  <th class="py-3 px-4 font-semibold w-28">學號 / 姓名</th>
+                  <th class="py-3 px-4 font-semibold w-36">班級 / 學號姓名</th>
                   <th class="py-3 px-4 font-semibold">目前指定試卷（點 × 移除 / 三段式新增）</th>
-                  <th class="py-3 px-4 font-semibold w-36">該日平均得分</th>
+                  <th class="py-3 px-4 font-semibold w-32">該日平均得分</th>
                   <th class="py-3 px-4 font-semibold w-44">該日已完成卷別</th>
                 </tr>
               </thead>
-              <tbody id="t-students-tbody" class="divide-y divide-[#EFECE6]">
-                <!-- 動態產生學生列 -->
-              </tbody>
+              <tbody id="t-students-tbody" class="divide-y divide-[#EFECE6]"></tbody>
             </table>
           </div>
         </div>
@@ -475,35 +447,32 @@
               <thead>
                 <tr class="bg-[#F6F4EF] border-b border-[#E6E2D8] text-xs text-slate-600">
                   <th class="py-3 px-4 font-semibold">時間</th>
-                  <th class="py-3 px-4 font-semibold">學號 / 姓名</th>
+                  <th class="py-3 px-4 font-semibold">班級 / 學號姓名</th>
                   <th class="py-3 px-4 font-semibold">試卷代號</th>
                   <th class="py-3 px-4 font-semibold">測驗分卷</th>
                   <th class="py-3 px-4 font-semibold">得分</th>
                   <th class="py-3 px-4 font-semibold">作答明細</th>
                 </tr>
               </thead>
-              <tbody id="t-logs-tbody" class="divide-y divide-[#EFECE6]">
-                <!-- 動態產生當日明細 -->
-              </tbody>
+              <tbody id="t-logs-tbody" class="divide-y divide-[#EFECE6]"></tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- 分頁 2：學生五向度永久能力值檔案 -->
+      <!-- 分頁 2：學生五向度永久能力值與班級歸屬檔案 -->
       <div id="t-panel-profiles" class="hidden">
         <div class="card-paper rounded-2xl overflow-hidden">
-          <div class="px-5 py-4 border-b border-[#E6E2D8] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">學生五向度永久能力值檔案</h3>
-              <p class="text-xs text-slate-500 mt-0.5">此處記錄每位學生在五大領域的長期能力等級（基礎／進階／精熟），即使某日清空派卷也不會遺失。</p>
-            </div>
+          <div class="px-5 py-4 border-b border-[#E6E2D8]">
+            <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">學生五向度能力值與班級群組檔案</h3>
+            <p class="text-xs text-slate-500 mt-0.5">可調整每位學生的所屬班級群組及五大領域長期能力等級（基礎／進階／精熟），修改後自動寫回試算表。</p>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
               <thead>
                 <tr class="bg-[#F6F4EF] border-b border-[#E6E2D8] text-xs text-slate-600">
                   <th class="py-3 px-4 font-semibold">學號 / 姓名</th>
+                  <th class="py-3 px-4 font-semibold">班級群組</th>
                   <th class="py-3 px-4 font-semibold">A 白話文閱讀</th>
                   <th class="py-3 px-4 font-semibold">B 國字注音</th>
                   <th class="py-3 px-4 font-semibold">C 文言文閱讀</th>
@@ -511,9 +480,7 @@
                   <th class="py-3 px-4 font-semibold">E 國學常識</th>
                 </tr>
               </thead>
-              <tbody id="t-profiles-tbody" class="divide-y divide-[#EFECE6]">
-                <!-- 動態產生能力值管理列 -->
-              </tbody>
+              <tbody id="t-profiles-tbody" class="divide-y divide-[#EFECE6]"></tbody>
             </table>
           </div>
         </div>
@@ -572,9 +539,7 @@
         </div>
         <button onclick="closeHistoryReviewModal()" class="text-slate-400 hover:text-slate-700 text-lg">✕</button>
       </div>
-      <div id="review-modal-body" class="p-6 overflow-y-auto space-y-4 flex-1">
-        <!-- 動態填入歷次作答題目、選項與解析 -->
-      </div>
+      <div id="review-modal-body" class="p-6 overflow-y-auto space-y-4 flex-1"></div>
       <div class="px-6 py-3.5 border-t border-[#E6E2D8] flex justify-end">
         <button onclick="closeHistoryReviewModal()" class="btn-primary px-5 py-2 rounded-xl text-xs font-semibold">
           關閉視窗
@@ -592,16 +557,14 @@
 
   <script>
     // =========================================================
-    // 1. Google Apps Script 部署網址設定（已填入您的最新部署網址）
+    // 1. Google Apps Script 部署網址設定（已更新為您的最新部署連結）
     // =========================================================
     const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbynv2wu83C2iQP4FH29VWgW5UJ-pXMIm0gaNe2FEuNIgci53FxM-Z5sbKyCDg36m6X1QQ/exec";
 
-    // 備用教師帳號（當試算表尚未建立「教師帳號」分頁時啟用）
     const FALLBACK_TEACHERS = [
-      { user: "teacher", pass: "1234", name: "國文科教師" }
+      { user: "teacher", pass: "1234", name: "國文科教師", scope: "ALL" }
     ];
 
-    // 五大國文能力向度定義
     const DOMAINS = {
       vernacular: { code: "A", name: "白話文閱讀", short: "白話文" },
       phonetics:  { code: "B", name: "國字注音",   short: "字音形" },
@@ -618,35 +581,30 @@
     };
     const CODE_TO_TIER = { a: "basic", b: "intermediate", c: "advanced" };
 
-    // 取得今日日期字串 (YYYY/MM/DD)
     function getTodayStr() {
       const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      return `${y}/${m}/${d}`;
+      return `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
     }
     const TODAY_STR = getTodayStr();
 
-    // 系統資料狀態（完全由 Google 試算表載入，無預設測試學生）
     let studentsDB = [];
     let questionsDB = [];
     let quizLogsDB = [];
     let teacherAccountsDB = [...FALLBACK_TEACHERS];
 
-    let currentUser = null; // { role: 'student' | 'teacher', data: ... }
+    let currentUser = null;
     let activeQuiz = {
       setId: "",
       domain: "vernacular",
       tier: "basic",
       questions: [],
       currentIndex: 0,
-      answers: [], // { questionId, selectedIndex, isCorrect }
+      answers: [],
       answeredCurrent: false
     };
 
     // =========================================================
-    // 2. Google 試算表雙向同步（讀取題庫/名單/紀錄 + JSONP 備援）
+    // 2. Google 試算表雙向同步
     // =========================================================
     async function syncFromGoogleSheet(showAlert = false) {
       const statusEl = document.getElementById('sheet-sync-status');
@@ -719,7 +677,12 @@
 
     function applySheetData(data, showAlert) {
       const statusEl = document.getElementById('sheet-sync-status');
-      if (Array.isArray(data.students)) studentsDB = data.students;
+      if (Array.isArray(data.students)) {
+        studentsDB = data.students.map(s => ({
+          ...s,
+          classGroup: s.classGroup || '未分班'
+        }));
+      }
       if (Array.isArray(data.questions)) questionsDB = data.questions;
       if (Array.isArray(data.logs)) quizLogsDB = data.logs;
       if (Array.isArray(data.teachers) && data.teachers.length > 0) {
@@ -733,12 +696,12 @@
         showToast(`試算表同步完成（學生 ${studentsDB.length} 人、題庫 ${questionsDB.length} 題）`);
       }
 
-      // 若目前已在登入後的畫面，同步更新顯示
       if (currentUser?.role === 'student') {
         const updated = studentsDB.find(s => s.id === currentUser.data.id);
         if (updated) currentUser.data = updated;
         renderStudentLobby();
       } else if (currentUser?.role === 'teacher') {
+        populateTeacherClassFilter();
         populateTeacherDateFilter();
         populateBatchRounds();
         renderTeacherDashboard();
@@ -759,11 +722,10 @@
     }
 
     // =========================================================
-    // 3. 登入、登出與畫面導覽控制
+    // 3. 登入、登出與權限過濾工具
     // =========================================================
     function showView(viewId) {
-      const views = ['view-login', 'view-student-lobby', 'view-quiz', 'view-quiz-result', 'view-teacher-dashboard'];
-      views.forEach(id => {
+      ['view-login', 'view-student-lobby', 'view-quiz', 'view-quiz-result', 'view-teacher-dashboard'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
       });
@@ -792,7 +754,6 @@
 
     function normalizePassword(val) {
       const s = String(val || '').trim();
-      // 處理試算表把 "0512" 存成數字 512 的情況
       if (/^\d{3}$/.test(s)) return '0' + s;
       return s;
     }
@@ -803,7 +764,7 @@
       const pwdInput = normalizePassword(document.getElementById('login-student-bday').value);
 
       if (studentsDB.length === 0) {
-        showToast('尚未讀取到學生名單，請先確認試算表連線或點選「重新讀取」');
+        showToast('尚未讀取到學生名單，請先點選「重新讀取」');
         return;
       }
 
@@ -839,11 +800,24 @@
 
       currentUser = { role: 'teacher', data: matched };
       updateNavbar();
+      populateTeacherClassFilter();
       populateTeacherDateFilter();
       populateBatchRounds();
       renderTeacherDashboard();
       showView('view-teacher-dashboard');
       showToast(`已登入教師管理後台（${matched.name}）`);
+    }
+
+    // 依目前登入老師的 scope 權限，取得該老師有權檢視的學生清單
+    function getAuthorizedStudents() {
+      const teacher = currentUser?.data;
+      if (!teacher || !teacher.scope || teacher.scope === 'ALL') {
+        return studentsDB;
+      }
+      const allowedTokens = new Set(teacher.scope.map(s => String(s).trim()));
+      return studentsDB.filter(stu =>
+        allowedTokens.has(String(stu.classGroup).trim()) || allowedTokens.has(String(stu.id).trim())
+      );
     }
 
     function updateNavbar() {
@@ -855,7 +829,7 @@
 
       if (currentUser.role === 'student') {
         navArea.innerHTML = `
-          <span class="text-xs font-medium text-slate-600 hidden sm:inline">${currentUser.data.id} ${currentUser.data.name}</span>
+          <span class="text-xs font-medium text-slate-600 hidden sm:inline">${currentUser.data.classGroup}・${currentUser.data.id} ${currentUser.data.name}</span>
           <button onclick="openPasswordModal()" class="px-3 py-1.5 rounded-lg border border-[#DCD7CD] text-xs font-medium text-slate-700 hover:bg-[#F6F4EF]">
             修改密碼
           </button>
@@ -894,7 +868,7 @@
     }
 
     // =========================================================
-    // 4. 試卷代號解析與題庫目錄工具 (如 A-a-1)
+    // 4. 試卷代號解析工具
     // =========================================================
     function parseSetCode(setCode) {
       const clean = String(setCode || '').trim();
@@ -930,14 +904,14 @@
     }
 
     // =========================================================
-    // 5. 學生端畫面渲染（指定試卷 + 自主練習 + 歷次題目回顧）
+    // 5. 學生端畫面渲染
     // =========================================================
     function renderStudentLobby() {
       const stu = currentUser.data;
+      document.getElementById('stu-badge-class').textContent = stu.classGroup || '未分班';
       document.getElementById('stu-badge-id').textContent = `學號 ${stu.id}`;
       document.getElementById('stu-welcome-name').textContent = `${stu.name} 同學，歡迎回來`;
 
-      // 五科目前能力值徽章
       const badgesEl = document.getElementById('stu-level-badges');
       badgesEl.innerHTML = Object.keys(DOMAINS).map(dKey => {
         const tKey = stu.levels[dKey] || 'basic';
@@ -949,7 +923,6 @@
         `;
       }).join('');
 
-      // 取得該生今日已完成的試卷代號
       const myLogs = quizLogsDB.filter(l => String(l.studentId) === String(stu.id));
       const todayDoneSetIds = new Set(myLogs.filter(l => l.date === TODAY_STR).map(l => l.setId));
 
@@ -996,7 +969,6 @@
         }).join('');
       }
 
-      // 判斷是否解鎖「自主延伸練習區」（所有指定卷皆於今日完成，且題庫有其他卷）
       const allAssignedCompleted = assigned.length > 0 && assigned.every(sid => todayDoneSetIds.has(sid));
       const freeWrapper = document.getElementById('stu-free-practice-wrapper');
       if (allAssignedCompleted) {
@@ -1006,7 +978,6 @@
         freeWrapper.classList.add('hidden');
       }
 
-      // 渲染歷次作答紀錄表
       renderStudentHistoryTable(myLogs);
     }
 
@@ -1130,7 +1101,6 @@
       modal.classList.remove('flex');
     }
 
-    // 學生修改密碼視窗控制
     function openPasswordModal() {
       document.getElementById('pwd-modal-id').value = currentUser.data.id;
       document.getElementById('pwd-modal-old').value = '';
@@ -1175,7 +1145,7 @@
     }
 
     // =========================================================
-    // 6. 測驗引擎（支援長文本與最多 10 題作答）
+    // 6. 測驗引擎
     // =========================================================
     function startQuizBySet(setId) {
       const info = parseSetCode(setId);
@@ -1302,8 +1272,10 @@
     }
 
     function abortQuiz() {
-      renderStudentLobby();
-      showView('view-student-lobby');
+      if (confirm('確定要離開目前測驗嗎？本次尚未交卷的進度將不會儲存。')) {
+        renderStudentLobby();
+        showView('view-student-lobby');
+      }
     }
 
     function finishAndSubmitQuiz() {
@@ -1384,7 +1356,7 @@
     }
 
     // =========================================================
-    // 7. 教師管理後台（換日平均 + 批次派卷 + 三段式個別派卷 + 能力檔案）
+    // 7. 教師管理後台（權限隔離 + 班級群組統一派卷 + 換日統計）
     // =========================================================
     function switchTeacherTab(tab) {
       const dailyTab = document.getElementById('t-tab-daily');
@@ -1407,6 +1379,38 @@
         dailyPanel.classList.add('hidden');
         filterBar.classList.add('hidden');
         renderTeacherProfilesTable();
+      }
+    }
+
+    function populateTeacherClassFilter() {
+      const select = document.getElementById('t-filter-class');
+      const scopeBadge = document.getElementById('teacher-scope-badge');
+      if (!select) return;
+
+      const teacher = currentUser?.data;
+      if (scopeBadge) {
+        scopeBadge.textContent = (!teacher?.scope || teacher.scope === 'ALL')
+          ? '權限範圍：全校所有班級'
+          : `負責範圍：${teacher.scope.join('、')}`;
+      }
+
+      const authStudents = getAuthorizedStudents();
+      const classSet = new Set();
+      authStudents.forEach(s => {
+        if (s.classGroup) classSet.add(s.classGroup);
+      });
+
+      const sortedClasses = Array.from(classSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+      const prevVal = select.value;
+
+      select.innerHTML = `<option value="all">全部授權班級（${authStudents.length}人）</option>` +
+        sortedClasses.map(c => {
+          const count = authStudents.filter(s => s.classGroup === c).length;
+          return `<option value="${c}">${c}（${count}人）</option>`;
+        }).join('');
+
+      if (prevVal && (prevVal === 'all' || classSet.has(prevVal))) {
+        select.value = prevVal;
       }
     }
 
@@ -1434,19 +1438,42 @@
       select.innerHTML = sorted.map(r => `<option value="${r}">第 ${r} 卷</option>`).join('');
     }
 
+    // 取得目前老師「授權範圍內」且符合「目前選定班級群組」的學生
+    function getFilteredTeacherStudents() {
+      const authStudents = getAuthorizedStudents();
+      const selectedClass = document.getElementById('t-filter-class')?.value || 'all';
+      if (selectedClass === 'all') return authStudents;
+      return authStudents.filter(s => s.classGroup === selectedClass);
+    }
+
     function renderTeacherDashboard() {
+      const selectedClass = document.getElementById('t-filter-class')?.value || 'all';
       const selectedDate = document.getElementById('t-filter-date')?.value || TODAY_STR;
       const selectedDomain = document.getElementById('t-filter-domain')?.value || 'all';
 
-      const dayLogs = quizLogsDB.filter(l => l.date === selectedDate);
+      const targetStudents = getFilteredTeacherStudents();
+      const targetStudentIds = new Set(targetStudents.map(s => String(s.id)));
+
+      // 更新批次派卷控制台的目標群組徽章
+      const batchBadge = document.getElementById('batch-target-class-badge');
+      if (batchBadge) {
+        batchBadge.textContent = selectedClass === 'all'
+          ? `對象：全部授權學生（${targetStudents.length}人）`
+          : `對象：${selectedClass} 群組（${targetStudents.length}人）`;
+      }
+
+      // 只統計目標群組學生在該日的紀錄
+      const dayLogs = quizLogsDB.filter(l => l.date === selectedDate && targetStudentIds.has(String(l.studentId)));
       const filteredLogs = selectedDomain === 'all'
         ? dayLogs
         : dayLogs.filter(l => l.domain === selectedDomain);
 
+      // KPI 1
       const uniqueStuIds = new Set(filteredLogs.map(l => l.studentId));
       document.getElementById('kpi-completed').textContent = `${uniqueStuIds.size} 人（共 ${filteredLogs.length} 卷）`;
-      document.getElementById('kpi-date-label').textContent = `統計日期：${selectedDate}`;
+      document.getElementById('kpi-date-label').textContent = `日期：${selectedDate}`;
 
+      // KPI 2
       const avgScore = filteredLogs.length > 0
         ? Math.round(filteredLogs.reduce((acc, l) => acc + l.score, 0) / filteredLogs.length)
         : null;
@@ -1455,6 +1482,7 @@
         ? '全部分卷平均'
         : `${DOMAINS[selectedDomain].name}平均`;
 
+      // KPI 3
       const domainAvgEl = document.getElementById('kpi-domain-averages');
       domainAvgEl.innerHTML = Object.keys(DOMAINS).map(dKey => {
         const dLogs = dayLogs.filter(l => l.domain === dKey);
@@ -1469,18 +1497,18 @@
         `;
       }).join('');
 
-      renderTeacherStudentsTable(filteredLogs);
+      renderTeacherStudentsTable(targetStudents, filteredLogs);
       renderTeacherLogsTable(filteredLogs);
     }
 
-    function renderTeacherStudentsTable(filteredLogs) {
+    function renderTeacherStudentsTable(targetStudents, filteredLogs) {
       const tbody = document.getElementById('t-students-tbody');
-      if (studentsDB.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-xs text-slate-400">試算表「學生名單」目前尚無學生資料。</td></tr>`;
+      if (targetStudents.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-xs text-slate-400">目前篩選範圍內尚無學生資料。</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = studentsDB.map(stu => {
+      tbody.innerHTML = targetStudents.map(stu => {
         const stuLogs = filteredLogs.filter(l => String(l.studentId) === String(stu.id));
         const stuAvg = stuLogs.length > 0
           ? Math.round(stuLogs.reduce((s, l) => s + l.score, 0) / stuLogs.length)
@@ -1498,6 +1526,7 @@
         return `
           <tr class="hover:bg-[#FAF9F6] align-top">
             <td class="py-3.5 px-4">
+              <span class="inline-block px-1.5 py-0.5 rounded bg-[#F2EFE9] text-slate-600 text-[10px] font-semibold mb-1">${stu.classGroup}</span>
               <div class="font-bold text-[#2C3539]">${stu.name}</div>
               <div class="text-[11px] text-slate-400">${stu.id}</div>
             </td>
@@ -1505,7 +1534,6 @@
               <div class="flex flex-wrap gap-1.5 min-h-[24px]">
                 ${assignedTags || '<span class="text-xs text-slate-400">目前無指定試卷（不派卷）</span>'}
               </div>
-              <!-- 三段式逐步點選新增：題型 -> 等級 -> 卷別 -->
               <div class="flex flex-wrap items-center gap-1.5 pt-1">
                 <select id="pick-domain-${stu.id}" onchange="onStudentPickerDomainChange('${stu.id}')"
                   class="px-2 py-1 rounded-lg border border-[#DCD7CD] bg-white text-xs text-[#2C3539]">
@@ -1594,6 +1622,7 @@
       showToast(`已移除 ${stu.name} 的試卷 ${setId}`);
     }
 
+    // 依目前選定的班級群組與各自能力值批次統一派卷
     function executeBatchDispatch() {
       const checkedDomains = Array.from(document.querySelectorAll('.batch-domain-cb:checked')).map(cb => cb.value);
       if (checkedDomains.length === 0) {
@@ -1602,8 +1631,14 @@
       }
       const round = document.getElementById('batch-round-select').value;
       const mode = document.getElementById('batch-mode-select').value;
+      const targetStudents = getFilteredTeacherStudents();
 
-      studentsDB.forEach(stu => {
+      if (targetStudents.length === 0) {
+        showToast('目前選定的班級群組內無學生');
+        return;
+      }
+
+      targetStudents.forEach(stu => {
         const generated = checkedDomains.map(dKey => {
           const dCode = DOMAINS[dKey].code;
           const tKey = stu.levels[dKey] || 'basic';
@@ -1620,17 +1655,25 @@
         syncStudentProfileToSheet(stu);
       });
 
+      const selectedClass = document.getElementById('t-filter-class')?.value || 'all';
+      const label = selectedClass === 'all' ? '全部授權學生' : `${selectedClass} 群組`;
       renderTeacherDashboard();
-      showToast(`已依全班能力值完成第 ${round} 卷派發！`);
+      showToast(`已完成「${label}」第 ${round} 卷統一派發！`);
     }
 
-    function clearAllAssignedSets() {
-      studentsDB.forEach(stu => {
+    function clearGroupAssignedSets() {
+      const targetStudents = getFilteredTeacherStudents();
+      const selectedClass = document.getElementById('t-filter-class')?.value || 'all';
+      const label = selectedClass === 'all' ? '全部授權學生' : `${selectedClass} 群組`;
+
+      if (!confirm(`確定要清空「${label}」目前的指定試卷嗎？（學生的五向度永久能力值仍會完整保留）`)) return;
+
+      targetStudents.forEach(stu => {
         stu.assignedSets = [];
         syncStudentProfileToSheet(stu);
       });
       renderTeacherDashboard();
-      showToast('已清空全班派卷（今日不派卷）');
+      showToast(`已清空「${label}」派卷（今日不派卷）`);
     }
 
     function renderTeacherLogsTable(filteredLogs) {
@@ -1642,10 +1685,15 @@
 
       tbody.innerHTML = [...filteredLogs].reverse().map(log => {
         const info = parseSetCode(log.setId);
+        const stuObj = studentsDB.find(s => String(s.id) === String(log.studentId));
+        const classTag = stuObj?.classGroup || '';
         return `
           <tr class="hover:bg-[#FAF9F6]">
             <td class="py-3 px-4 text-xs text-slate-500">${log.time || '--'}</td>
-            <td class="py-3 px-4 text-xs font-bold text-[#2C3539]">${log.studentId} ${log.studentName}</td>
+            <td class="py-3 px-4 text-xs font-bold text-[#2C3539]">
+              ${classTag ? `<span class="px-1.5 py-0.5 rounded bg-[#F2EFE9] text-slate-600 text-[10px] mr-1">${classTag}</span>` : ''}
+              ${log.studentId} ${log.studentName}
+            </td>
             <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-[#F0F5F4] text-[#3B6E6C] text-xs font-bold">${log.setId}</span></td>
             <td class="py-3 px-4 text-xs text-slate-600">${info.fullTitle}</td>
             <td class="py-3 px-4 font-bold text-sm ${log.score >= 80 ? 'text-[#3B6E6C]' : 'text-[#C86D51]'}">${log.score} 分</td>
@@ -1657,16 +1705,23 @@
 
     function renderTeacherProfilesTable() {
       const tbody = document.getElementById('t-profiles-tbody');
-      if (studentsDB.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-xs text-slate-400">試算表「學生名單」目前尚無學生資料。</td></tr>`;
+      const authStudents = getAuthorizedStudents();
+
+      if (authStudents.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-xs text-slate-400">權限範圍內尚無學生資料。</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = studentsDB.map(stu => `
+      tbody.innerHTML = authStudents.map(stu => `
         <tr class="hover:bg-[#FAF9F6]">
           <td class="py-3.5 px-4">
             <div class="font-bold text-[#2C3539]">${stu.name}</div>
             <div class="text-[11px] text-slate-400">${stu.id}</div>
+          </td>
+          <td class="py-3.5 px-4">
+            <input type="text" value="${stu.classGroup || '未分班'}"
+              onchange="updateStudentClassGroup('${stu.id}', this.value)"
+              class="w-24 px-2.5 py-1 rounded-lg border border-[#DCD7CD] bg-[#FAF9F6] focus:bg-white text-xs font-semibold text-[#2C3539]" />
           </td>
           ${Object.keys(DOMAINS).map(dKey => {
             const curTier = stu.levels[dKey] || 'basic';
@@ -1685,6 +1740,15 @@
       `).join('');
     }
 
+    function updateStudentClassGroup(studentId, newGroup) {
+      const stu = studentsDB.find(s => String(s.id) === String(studentId));
+      if (!stu) return;
+      stu.classGroup = String(newGroup || '').trim() || '未分班';
+      syncStudentProfileToSheet(stu);
+      populateTeacherClassFilter();
+      showToast(`已將 ${stu.name} 歸類至「${stu.classGroup}」`);
+    }
+
     function updateStudentPermanentLevel(studentId, domainKey, newTier) {
       const stu = studentsDB.find(s => String(s.id) === String(studentId));
       if (!stu) return;
@@ -1698,13 +1762,14 @@
       postToGoogleSheet({
         action: 'updateStudentProfile',
         studentId: stu.id,
+        classGroup: stu.classGroup || '未分班',
         levels: stu.levels,
         assignedSets: (stu.assignedSets || []).join(', ')
       });
     }
 
     // =========================================================
-    // 8. 全域提示訊息與頁面啟動初始化
+    // 8. 全域提示訊息與啟動初始化
     // =========================================================
     let toastTimer = null;
     function showToast(msg) {
