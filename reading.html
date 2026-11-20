@@ -422,13 +422,13 @@
         <div class="card-paper rounded-2xl overflow-hidden">
           <div class="px-5 py-4 border-b border-[#E6E2D8] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">學生個別派卷與當日作答狀態</h3>
-            <span class="text-xs text-slate-500">可針對個別學生依「題型 → 等級 → 卷別」逐步新增指定試卷</span>
+            <span class="text-xs text-slate-500">點擊「📊 學習分析」可檢視單一學生歷次表現與自動升降級建議</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
               <thead>
                 <tr class="bg-[#F6F4EF] border-b border-[#E6E2D8] text-xs text-slate-600">
-                  <th class="py-3 px-4 font-semibold w-44">所屬群組 / 學號姓名</th>
+                  <th class="py-3 px-4 font-semibold w-48">所屬群組 / 學號姓名</th>
                   <th class="py-3 px-4 font-semibold">目前指定試卷（點 × 移除 / 三段式新增）</th>
                   <th class="py-3 px-4 font-semibold w-32">該日平均得分</th>
                   <th class="py-3 px-4 font-semibold w-44">該日已完成卷別</th>
@@ -549,6 +549,35 @@
     </div>
   </div>
 
+  <!-- ==================== 彈窗 3：教師檢視單一學生作答分析與適性升降級診斷 ==================== -->
+  <div id="modal-student-analytics" class="fixed inset-0 bg-black/45 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-xl border border-[#E6E2D8]">
+      <div class="px-6 py-4 border-b border-[#E6E2D8] flex items-center justify-between bg-[#FAF9F6] rounded-t-2xl">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 id="analytics-modal-title" class="font-serif-tc text-lg sm:text-xl font-bold text-[#2C3539]">學生個別學習分析與適性診斷</h3>
+            <span id="analytics-modal-groups" class="px-2 py-0.5 rounded bg-[#F0F5F4] text-[#3B6E6C] text-xs font-semibold">--</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">
+            判定標準：【建議升級】目前等級連續 2 次滿分 100 分，或近 3 次平均 ≥ 90 分（且皆 ≥ 80 分）；【建議降級】目前等級連續 2 次低於 60 分，或近 3 次平均 &lt; 60 分。
+          </p>
+        </div>
+        <button onclick="closeStudentAnalyticsModal()" class="text-slate-400 hover:text-slate-700 text-xl px-2">✕</button>
+      </div>
+
+      <div id="analytics-modal-body" class="p-6 overflow-y-auto space-y-6 flex-1">
+        <!-- 動態填入單一學生統計摘要、五向度升降級建議卡、歷次作答明細 -->
+      </div>
+
+      <div class="px-6 py-3.5 border-t border-[#E6E2D8] flex justify-between items-center bg-[#FAF9F6] rounded-b-2xl">
+        <span class="text-xs text-slate-500">點擊「執行升級／降級」後將立即更新該生能力檔案並同步寫回試算表</span>
+        <button onclick="closeStudentAnalyticsModal()" class="btn-primary px-5 py-2 rounded-xl text-xs font-semibold">
+          完成並關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 全域提示訊息 Toast -->
   <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden">
     <div class="bg-[#2C3539] text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2">
@@ -581,6 +610,7 @@
       advanced:     { code: "c", name: "精熟組", short: "精熟", badgeClass: "bg-rose-50 text-rose-700 border-rose-200" }
     };
     const CODE_TO_TIER = { a: "basic", b: "intermediate", c: "advanced" };
+    const TIER_ORDER = ["basic", "intermediate", "advanced"];
 
     function getTodayStr() {
       const now = new Date();
@@ -1187,7 +1217,7 @@
       if (q.passage && q.passage.trim() !== '') {
         passageBox.classList.remove('hidden');
         passageContent.textContent = q.passage.trim();
-        passageContent.scrollTop = 0; // 切換題目時自動將閱讀框捲軸回到頂部
+        passageContent.scrollTop = 0;
       } else {
         passageBox.classList.add('hidden');
       }
@@ -1515,6 +1545,11 @@
           ? Math.round(stuLogs.reduce((s, l) => s + l.score, 0) / stuLogs.length)
           : null;
 
+        // 檢查該生是否有任一科目達到升級或降級建議，給予小紅點/綠點提示
+        const evalResults = Object.keys(DOMAINS).map(dKey => evaluateDomainRecommendation(stu, dKey));
+        const hasUpgrade = evalResults.some(r => r.action === 'upgrade');
+        const hasDowngrade = evalResults.some(r => r.action === 'downgrade');
+
         const groupBadges = (stu.classGroups || ['未分班']).map(g =>
           `<span class="inline-block px-1.5 py-0.5 rounded bg-[#F2EFE9] text-slate-600 text-[10px] font-semibold">${g}</span>`
         ).join(' ');
@@ -1533,7 +1568,13 @@
             <td class="py-3.5 px-4">
               <div class="flex flex-wrap gap-1 mb-1">${groupBadges}</div>
               <div class="font-bold text-[#2C3539]">${stu.name}</div>
-              <div class="text-[11px] text-slate-400">${stu.id}</div>
+              <div class="text-[11px] text-slate-400 mb-2">${stu.id}</div>
+              <button type="button" onclick="openStudentAnalyticsModal('${stu.id}')"
+                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#3B6E6C] bg-white text-[#3B6E6C] hover:bg-[#3B6E6C] hover:text-white text-[11px] font-semibold transition">
+                <span>📊 學習分析</span>
+                ${hasUpgrade ? '<span class="w-2 h-2 rounded-full bg-emerald-500" title="有科目達升級標準"></span>' : ''}
+                ${hasDowngrade ? '<span class="w-2 h-2 rounded-full bg-rose-500" title="有科目達降級標準"></span>' : ''}
+              </button>
             </td>
             <td class="py-3.5 px-4 space-y-2">
               <div class="flex flex-wrap gap-1.5 min-h-[24px]">
@@ -1778,7 +1819,261 @@
     }
 
     // =========================================================
-    // 8. 全域提示訊息與啟動初始化
+    // 8. 單一學生作答分析與自動升降級診斷模組
+    // =========================================================
+    function evaluateDomainRecommendation(stu, domainKey) {
+      const curTier = stu.levels?.[domainKey] || 'basic';
+      const curIdx = TIER_ORDER.indexOf(curTier);
+      // 篩選該生在該領域、且屬於「目前能力等級」的歷次作答紀錄（按作答順序）
+      const domainLogs = quizLogsDB.filter(l =>
+        String(l.studentId) === String(stu.id) &&
+        l.domain === domainKey &&
+        l.tier === curTier
+      );
+
+      const allDomainLogs = quizLogsDB.filter(l =>
+        String(l.studentId) === String(stu.id) &&
+        l.domain === domainKey
+      );
+
+      const avgAll = allDomainLogs.length > 0
+        ? Math.round(allDomainLogs.reduce((s, l) => s + l.score, 0) / allDomainLogs.length)
+        : null;
+
+      if (domainLogs.length < 2) {
+        return {
+          action: 'keep',
+          curTier,
+          nextTier: curTier,
+          recentLogs: domainLogs,
+          avgAll,
+          reason: domainLogs.length === 0 ? '目前等級尚無作答紀錄' : '目前等級僅作答 1 次，累積 2 次後啟動升降級評估'
+        };
+      }
+
+      const last2 = domainLogs.slice(-2);
+      const last3 = domainLogs.slice(-3);
+      const avgLast3 = last3.length === 3
+        ? Math.round(last3.reduce((s, l) => s + l.score, 0) / 3)
+        : null;
+
+      // 升級判斷（尚未達最高級精熟組）
+      if (curIdx < TIER_ORDER.length - 1) {
+        const isTwoPerfect = last2.every(l => l.score === 100);
+        const isThreeHigh = last3.length === 3 && avgLast3 >= 90 && last3.every(l => l.score >= 80);
+        if (isTwoPerfect || isThreeHigh) {
+          const nextTier = TIER_ORDER[curIdx + 1];
+          return {
+            action: 'upgrade',
+            curTier,
+            nextTier,
+            recentLogs: last3,
+            avgAll,
+            reason: isTwoPerfect
+              ? `目前等級連續 2 次獲得 100 分滿分，建議晉升至「${TIERS[nextTier].name}」`
+              : `最近 3 次平均達 ${avgLast3} 分且表現穩定，建議晉升至「${TIERS[nextTier].name}」`
+          };
+        }
+      }
+
+      // 降級判斷（尚未達最低級基礎組）
+      if (curIdx > 0) {
+        const isTwoFail = last2.every(l => l.score < 60);
+        const isThreeFail = last3.length === 3 && avgLast3 < 60;
+        if (isTwoFail || isThreeFail) {
+          const prevTier = TIER_ORDER[curIdx - 1];
+          return {
+            action: 'downgrade',
+            curTier,
+            nextTier: prevTier,
+            recentLogs: last3,
+            avgAll,
+            reason: isTwoFail
+              ? `目前等級連續 2 次低於 60 分，建議先調降至「${TIERS[prevTier].name}」穩固基礎`
+              : `最近 3 次平均僅 ${avgLast3} 分，建議調降至「${TIERS[prevTier].name}」重新建立信心`
+          };
+        }
+      }
+
+      return {
+        action: 'keep',
+        curTier,
+        nextTier: curTier,
+        recentLogs: last3,
+        avgAll,
+        reason: curIdx === TIER_ORDER.length - 1
+          ? '已處於最高「精熟組」，表現穩定'
+          : '近期作答表現符合目前難度，建議維持原組別繼續練習'
+      };
+    }
+
+    function openStudentAnalyticsModal(studentId) {
+      const stu = studentsDB.find(s => String(s.id) === String(studentId));
+      if (!stu) return;
+
+      document.getElementById('analytics-modal-title').textContent = `${stu.name}（${stu.id}）｜個別學習歷程與適性診斷`;
+      document.getElementById('analytics-modal-groups').textContent = (stu.classGroups || ['未分班']).join('、');
+
+      const stuLogs = quizLogsDB.filter(l => String(l.studentId) === String(stu.id));
+      const totalAttempts = stuLogs.length;
+      const overallAvg = totalAttempts > 0
+        ? Math.round(stuLogs.reduce((s, l) => s + l.score, 0) / totalAttempts)
+        : null;
+      const bestScore = totalAttempts > 0
+        ? Math.max(...stuLogs.map(l => l.score))
+        : null;
+
+      // 五向度診斷卡 HTML
+      const domainCardsHtml = Object.keys(DOMAINS).map(dKey => {
+        const dObj = DOMAINS[dKey];
+        const evalRes = evaluateDomainRecommendation(stu, dKey);
+        const curTierObj = TIERS[evalRes.curTier];
+        const trendStr = evalRes.recentLogs.length > 0
+          ? evalRes.recentLogs.map(l => `${l.score}分`).join(' → ')
+          : '尚無近期紀錄';
+
+        let statusBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold">維持原級</span>`;
+        let actionBtnHtml = '';
+        let cardBorder = 'border-[#E6E2D8] bg-white';
+
+        if (evalRes.action === 'upgrade') {
+          cardBorder = 'border-emerald-300 bg-emerald-50/40';
+          statusBadge = `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">▲ 達升級標準</span>`;
+          actionBtnHtml = `
+            <button type="button" onclick="applyStudentLevelAdjustment('${stu.id}', '${dKey}', '${evalRes.nextTier}')"
+              class="mt-2.5 w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition">
+              一鍵升級為「${TIERS[evalRes.nextTier].name}」
+            </button>
+          `;
+        } else if (evalRes.action === 'downgrade') {
+          cardBorder = 'border-rose-300 bg-rose-50/40';
+          statusBadge = `<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold">▼ 達降級標準</span>`;
+          actionBtnHtml = `
+            <button type="button" onclick="applyStudentLevelAdjustment('${stu.id}', '${dKey}', '${evalRes.nextTier}')"
+              class="mt-2.5 w-full py-1.5 rounded-lg bg-[#C86D51] hover:bg-[#B25B40] text-white text-xs font-semibold transition">
+              一鍵降級為「${TIERS[evalRes.nextTier].name}」
+            </button>
+          `;
+        }
+
+        return `
+          <div class="p-4 rounded-xl border ${cardBorder} flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <span class="font-bold text-sm text-[#2C3539]">${dObj.code} ${dObj.name}</span>
+                ${statusBadge}
+              </div>
+              <div class="flex items-center gap-2 text-xs mb-2">
+                <span class="text-slate-500">目前等級：</span>
+                <select onchange="applyStudentLevelAdjustment('${stu.id}', '${dKey}', this.value)"
+                  class="px-2 py-0.5 rounded border text-xs font-semibold ${curTierObj.badgeClass}">
+                  <option value="basic" ${evalRes.curTier === 'basic' ? 'selected' : ''}>基礎組</option>
+                  <option value="intermediate" ${evalRes.curTier === 'intermediate' ? 'selected' : ''}>進階組</option>
+                  <option value="advanced" ${evalRes.curTier === 'advanced' ? 'selected' : ''}>精熟組</option>
+                </select>
+                ${evalRes.avgAll !== null ? `<span class="ml-auto text-slate-500">該科總均 <b>${evalRes.avgAll}分</b></span>` : ''}
+              </div>
+              <div class="text-xs text-slate-600 bg-[#FAF9F6] px-2.5 py-1.5 rounded-lg border border-[#EFECE6] mb-1.5">
+                近期同級走勢：<span class="font-semibold text-[#2C3539]">${trendStr}</span>
+              </div>
+              <p class="text-[11px] text-slate-500 leading-relaxed">${evalRes.reason}</p>
+            </div>
+            ${actionBtnHtml}
+          </div>
+        `;
+      }).join('');
+
+      // 該生歷次作答明細表 HTML
+      const historyRowsHtml = stuLogs.length === 0
+        ? `<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">該生目前尚無作答紀錄。</td></tr>`
+        : [...stuLogs].reverse().map(log => {
+            const info = parseSetCode(log.setId);
+            return `
+              <tr class="hover:bg-[#FAF9F6]">
+                <td class="py-2.5 px-3 text-xs text-slate-500">${log.date} ${log.time || ''}</td>
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-[#F0F5F4] text-[#3B6E6C] text-xs font-bold">${log.setId}</span></td>
+                <td class="py-2.5 px-3 text-xs text-[#2C3539]">${info.domainName}</td>
+                <td class="py-2.5 px-3 text-xs text-slate-600">${TIERS[info.tier].name}</td>
+                <td class="py-2.5 px-3 font-bold text-xs ${log.score >= 80 ? 'text-[#3B6E6C]' : (log.score < 60 ? 'text-rose-600' : 'text-[#C86D51]')}">${log.score} 分</td>
+                <td class="py-2.5 px-3 text-[11px] text-slate-500 max-w-xs truncate" title="${log.details}">${log.details}</td>
+              </tr>
+            `;
+          }).join('');
+
+      const bodyEl = document.getElementById('analytics-modal-body');
+      bodyEl.innerHTML = `
+        <!-- 頂部 3 項個人總覽指標 -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="p-3.5 rounded-xl bg-[#FAF9F6] border border-[#E6E2D8] text-center">
+            <div class="text-xs text-slate-500">累計完成試卷</div>
+            <div class="text-xl font-bold text-[#2C3539] mt-0.5">${totalAttempts} 卷</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-[#FAF9F6] border border-[#E6E2D8] text-center">
+            <div class="text-xs text-slate-500">歷次總平均分</div>
+            <div class="text-xl font-bold text-[#3B6E6C] mt-0.5">${overallAvg !== null ? `${overallAvg} 分` : '--'}</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-[#FAF9F6] border border-[#E6E2D8] text-center">
+            <div class="text-xs text-slate-500">最高測驗得分</div>
+            <div class="text-xl font-bold text-[#C86D51] mt-0.5">${bestScore !== null ? `${bestScore} 分` : '--'}</div>
+          </div>
+        </div>
+
+        <!-- 五向度適性升降級診斷卡片區 -->
+        <div>
+          <h4 class="font-serif-tc text-base font-bold text-[#2C3539] mb-2.5">五向度能力診斷與升降級建議</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            ${domainCardsHtml}
+          </div>
+        </div>
+
+        <!-- 該生完整作答紀錄列表 -->
+        <div>
+          <h4 class="font-serif-tc text-base font-bold text-[#2C3539] mb-2.5">歷次作答紀錄明細（由新到舊）</h4>
+          <div class="border border-[#E6E2D8] rounded-xl overflow-hidden">
+            <div class="overflow-x-auto max-h-60">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-[#F6F4EF] border-b border-[#E6E2D8] text-slate-600 sticky top-0">
+                  <tr>
+                    <th class="py-2.5 px-3 font-semibold">作答時間</th>
+                    <th class="py-2.5 px-3 font-semibold">試卷代號</th>
+                    <th class="py-2.5 px-3 font-semibold">題型領域</th>
+                    <th class="py-2.5 px-3 font-semibold">作答難度</th>
+                    <th class="py-2.5 px-3 font-semibold">得分</th>
+                    <th class="py-2.5 px-3 font-semibold">逐題明細</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[#EFECE6]">
+                  ${historyRowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const modal = document.getElementById('modal-student-analytics');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function applyStudentLevelAdjustment(studentId, domainKey, newTier) {
+      const stu = studentsDB.find(s => String(s.id) === String(studentId));
+      if (!stu) return;
+      stu.levels[domainKey] = newTier;
+      syncStudentProfileToSheet(stu);
+      openStudentAnalyticsModal(studentId); // 立即刷新分析視窗內的診斷狀態
+      renderTeacherDashboard();
+      showToast(`已將 ${stu.name} 的「${DOMAINS[domainKey].name}」調整為${TIERS[newTier].name}並同步試算表`);
+    }
+
+    function closeStudentAnalyticsModal() {
+      const modal = document.getElementById('modal-student-analytics');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // =========================================================
+    // 9. 全域提示訊息與啟動初始化
     // =========================================================
     let toastTimer = null;
     function showToast(msg) {
