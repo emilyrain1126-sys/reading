@@ -30,6 +30,14 @@
     .btn-primary:hover {
       background-color: #2F5856;
     }
+    .btn-accent {
+      background-color: #C86D51;
+      color: #FFFFFF;
+      transition: all 0.2s ease;
+    }
+    .btn-accent:hover {
+      background-color: #B25B40;
+    }
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -140,37 +148,43 @@
             <span class="px-2.5 py-0.5 rounded-md bg-[#F2EFE9] text-slate-700 text-xs font-semibold" id="stu-badge-id">學號</span>
             <h2 class="font-serif-tc text-xl sm:text-2xl font-bold text-[#2C3539]" id="stu-welcome-name">同學你好</h2>
           </div>
-          <p class="text-xs text-slate-500 mt-1.5">以下為老師依你的學習進度派發的指定試卷，完成後可隨時回顧解析或進行自主延伸練習。</p>
+          <p class="text-xs text-slate-500 mt-1.5">以下為老師依你的學習進度派發的指定試卷，可合併一次連考完畢，或分卷逐一練習。</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2" id="stu-level-badges"></div>
       </div>
 
+      <!-- 教師指定試卷區（支援一鍵合併連考） -->
       <div>
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-serif-tc text-lg font-bold text-[#2C3539] flex items-center gap-2">
-            <span class="w-1.5 h-5 rounded-full bg-[#3B6E6C]"></span>
-            教師指定作答試卷
-          </h3>
-          <span class="text-xs text-slate-500" id="stu-assigned-progress">今日進度：0 / 0 卷</span>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
+          <div class="flex items-center gap-3">
+            <h3 class="font-serif-tc text-lg font-bold text-[#2C3539] flex items-center gap-2">
+              <span class="w-1.5 h-5 rounded-full bg-[#3B6E6C]"></span>
+              教師指定作答試卷
+            </h3>
+            <span class="text-xs text-slate-500" id="stu-assigned-progress">今日進度：0 / 0 卷</span>
+          </div>
+          <div id="stu-merged-quiz-action"></div>
         </div>
         <div id="stu-assigned-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
 
-      <!-- 自主延伸練習區 -->
+      <!-- 自主延伸練習區（支援題型、難度、關鍵字三重快速篩選） -->
       <div id="stu-free-practice-wrapper" class="hidden pt-2">
         <div class="bg-[#F4F8F7] border border-[#CFE0DD] rounded-2xl p-5 sm:p-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
             <div>
               <span class="inline-block px-2.5 py-0.5 rounded-full bg-[#3B6E6C] text-white text-[11px] font-semibold mb-1">
                 已解鎖自主練習
               </span>
               <h3 class="font-serif-tc text-lg font-bold text-[#2C3539]">自主延伸練習題庫</h3>
-              <p class="text-xs text-slate-600 mt-0.5">你已完成所有指定任務！可依題型篩選並自由挑戰題庫中的其他試卷。</p>
+              <p class="text-xs text-slate-600 mt-0.5">你已完成所有指定任務！可透過下方篩選條件快速尋找想練習的其他試卷。</p>
             </div>
-            <div>
+
+            <!-- 多維度篩選器列 -->
+            <div class="flex flex-wrap items-center gap-2">
               <select id="stu-free-domain-filter" onchange="renderFreePracticeCards()"
-                class="px-3 py-2 rounded-xl border border-[#C8D8D5] bg-white text-xs font-medium text-[#2C3539] focus:outline-none">
+                class="px-3 py-2 rounded-xl border border-[#C8D8D5] bg-white text-xs font-medium text-[#2C3539] focus:outline-none focus:border-[#3B6E6C]">
                 <option value="all">全部題型分類</option>
                 <option value="vernacular">A 白話文閱讀</option>
                 <option value="phonetics">B 國字注音</option>
@@ -178,8 +192,32 @@
                 <option value="lesson">D 課文理解</option>
                 <option value="sinology">E 國學常識</option>
               </select>
+
+              <select id="stu-free-tier-filter" onchange="renderFreePracticeCards()"
+                class="px-3 py-2 rounded-xl border border-[#C8D8D5] bg-white text-xs font-medium text-[#2C3539] focus:outline-none focus:border-[#3B6E6C]">
+                <option value="all">全部難度組別</option>
+                <option value="basic">a 基礎組</option>
+                <option value="intermediate">b 進階組</option>
+                <option value="advanced">c 精熟組</option>
+              </select>
+
+              <div class="relative">
+                <input type="text" id="stu-free-search-input" oninput="renderFreePracticeCards()"
+                  placeholder="搜尋代號或卷別（如 A-a、第2卷）"
+                  class="w-48 sm:w-52 pl-3 pr-7 py-2 rounded-xl border border-[#C8D8D5] bg-white text-xs text-[#2C3539] focus:outline-none focus:border-[#3B6E6C]" />
+                <button type="button" onclick="clearFreePracticeFilters()" title="重設篩選"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs">
+                  ✕
+                </button>
+              </div>
             </div>
           </div>
+
+          <div class="flex items-center justify-between text-[11px] text-slate-500 mb-3">
+            <span id="stu-free-count-label">顯示 0 份可練習試卷</span>
+            <button type="button" onclick="clearFreePracticeFilters()" class="text-[#3B6E6C] hover:underline">清除所有篩選條件</button>
+          </div>
+
           <div id="stu-free-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
         </div>
       </div>
@@ -213,15 +251,18 @@
       </div>
     </section>
 
-    <!-- ==================== 3. 測驗作答畫面 ==================== -->
+    <!-- ==================== 3. 測驗作答畫面（支援單卷與多卷合併連考） ==================== -->
     <section id="view-quiz" class="hidden max-w-3xl mx-auto">
       <div class="card-paper rounded-2xl p-5 sm:p-8">
         <div class="flex items-center justify-between pb-4 mb-5 border-b border-[#ECE8DF]">
           <div>
-            <span id="quiz-set-badge" class="inline-block px-2.5 py-0.5 rounded-md bg-[#F0F5F4] text-[#3B6E6C] text-xs font-bold mb-1">A-a-1</span>
+            <div class="flex flex-wrap items-center gap-1.5 mb-1">
+              <span id="quiz-set-badge" class="inline-block px-2.5 py-0.5 rounded-md bg-[#F0F5F4] text-[#3B6E6C] text-xs font-bold">A-a-1</span>
+              <span id="quiz-current-sub-badge" class="hidden px-2 py-0.5 rounded-md bg-[#FAF8F3] border border-[#E5DFD3] text-[#8A795D] text-[11px] font-semibold">目前試卷：A-a-1</span>
+            </div>
             <h2 id="quiz-title" class="font-serif-tc text-lg sm:text-xl font-bold text-[#2C3539]">白話文閱讀・基礎・第1卷</h2>
           </div>
-          <button onclick="abortQuiz()" class="text-xs text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg border border-[#E0DBD1]">
+          <button onclick="abortQuiz()" class="text-xs text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg border border-[#E0DBD1] shrink-0">
             暫停返回
           </button>
         </div>
@@ -236,7 +277,7 @@
           </div>
         </div>
 
-        <!-- 長文本閱讀區（支援自動分段、限高獨立捲動與國文閱讀黃金行距） -->
+        <!-- 長文本閱讀區 -->
         <div id="quiz-passage-box" class="hidden mb-6 rounded-xl bg-[#FAF8F3] border border-[#E5DFD3] overflow-hidden">
           <div class="px-4 py-2.5 bg-[#F2EFE9] border-b border-[#E5DFD3] flex items-center justify-between">
             <span class="text-xs font-bold text-[#6E5F46]">📖 閱讀文本</span>
@@ -274,21 +315,27 @@
           成
         </div>
         <h2 class="font-serif-tc text-2xl font-bold text-[#2C3539]" id="result-set-title">測驗完成</h2>
-        <p class="text-xs text-slate-500 mt-1">作答成績與明細已同步記錄至學習歷程</p>
+        <p class="text-xs text-slate-500 mt-1" id="result-sync-subtitle">作答成績與明細已同步記錄至學習歷程</p>
 
         <div class="grid grid-cols-3 gap-3 max-w-md mx-auto my-6">
           <div class="p-3.5 rounded-xl bg-[#FAF9F6] border border-[#E6E2D8]">
-            <div class="text-xs text-slate-500">本次得分</div>
+            <div class="text-xs text-slate-500">總平均得分</div>
             <div class="text-2xl font-bold text-[#3B6E6C] mt-0.5" id="result-score">100</div>
           </div>
           <div class="p-3.5 rounded-xl bg-[#FAF9F6] border border-[#E6E2D8]">
-            <div class="text-xs text-slate-500">答對題數</div>
+            <div class="text-xs text-slate-500">總答對題數</div>
             <div class="text-2xl font-bold text-[#2C3539] mt-0.5" id="result-correct">10 / 10</div>
           </div>
           <div class="p-3.5 rounded-xl bg-[#FAF9F6] border border-[#E6E2D8]">
             <div class="text-xs text-slate-500">評定等級</div>
             <div class="text-xl font-bold text-[#C86D51] mt-1" id="result-rank">精熟</div>
           </div>
+        </div>
+
+        <!-- 若為合併連考，顯示各子試卷分項成績卡 -->
+        <div id="result-subscores-box" class="hidden mb-6 text-left">
+          <h3 class="font-serif-tc text-sm font-bold text-[#2C3539] mb-2">各試卷分項成績（已分別寫入紀錄）</h3>
+          <div id="result-subscores-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5"></div>
         </div>
 
         <div class="text-left mt-6 pt-6 border-t border-[#ECE8DF]">
@@ -419,10 +466,25 @@
           </div>
         </div>
 
+        <!-- 學生名單與個別三段式派卷、當日表現總表（附即時查詢學生功能） -->
         <div class="card-paper rounded-2xl overflow-hidden">
-          <div class="px-5 py-4 border-b border-[#E6E2D8] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">學生個別派卷與當日作答狀態</h3>
-            <span class="text-xs text-slate-500">點擊「📊 學習分析」可檢視單一學生歷次表現與自動升降級建議</span>
+          <div class="px-5 py-4 border-b border-[#E6E2D8] flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">學生個別派卷與當日作答狀態</h3>
+              <span class="text-xs text-slate-500">點擊「📊 學習分析」可檢視單一學生歷次表現與自動升降級建議</span>
+            </div>
+            <!-- 查詢學生搜尋框 -->
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <input type="text" id="t-search-student-daily" oninput="renderTeacherDashboard()"
+                  placeholder="🔍 搜尋學號、姓名或班級..."
+                  class="w-56 sm:w-64 pl-3 pr-7 py-1.5 rounded-xl border border-[#DCD7CD] bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-[#3B6E6C] text-xs text-[#2C3539]" />
+                <button type="button" onclick="clearTeacherSearch('t-search-student-daily', renderTeacherDashboard)"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs">
+                  ✕
+                </button>
+              </div>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
@@ -461,12 +523,24 @@
         </div>
       </div>
 
-      <!-- 分頁 2：學生五向度永久能力值與多班級歸屬檔案 -->
+      <!-- 分頁 2：學生五向度永久能力值與多班級歸屬檔案（附查詢學生功能） -->
       <div id="t-panel-profiles" class="hidden">
         <div class="card-paper rounded-2xl overflow-hidden">
-          <div class="px-5 py-4 border-b border-[#E6E2D8]">
-            <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">學生五向度能力值與多班級群組檔案</h3>
-            <p class="text-xs text-slate-500 mt-0.5">一位學生可同時隸屬多個班級群組（請用逗號分隔，例如：<code class="bg-slate-100 px-1 rounded">801, 閱讀加強班</code>），修改後自動寫回試算表。</p>
+          <div class="px-5 py-4 border-b border-[#E6E2D8] flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">學生五向度能力值與多班級群組檔案</h3>
+              <p class="text-xs text-slate-500 mt-0.5">一位學生可同時隸屬多個班級群組（請用逗號分隔，例如：<code class="bg-slate-100 px-1 rounded">801, 閱讀加強班</code>），修改後自動寫回試算表。</p>
+            </div>
+            <!-- 能力值檔案查詢學生搜尋框 -->
+            <div class="relative shrink-0">
+              <input type="text" id="t-search-student-profiles" oninput="renderTeacherProfilesTable()"
+                placeholder="🔍 搜尋學號、姓名或班級..."
+                class="w-56 sm:w-64 pl-3 pr-7 py-1.5 rounded-xl border border-[#DCD7CD] bg-[#FAF9F6] focus:bg-white focus:outline-none focus:border-[#3B6E6C] text-xs text-[#2C3539]" />
+              <button type="button" onclick="clearTeacherSearch('t-search-student-profiles', renderTeacherProfilesTable)"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs">
+                ✕
+              </button>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
@@ -565,9 +639,7 @@
         <button onclick="closeStudentAnalyticsModal()" class="text-slate-400 hover:text-slate-700 text-xl px-2">✕</button>
       </div>
 
-      <div id="analytics-modal-body" class="p-6 overflow-y-auto space-y-6 flex-1">
-        <!-- 動態填入單一學生統計摘要、五向度升降級建議卡、歷次作答明細 -->
-      </div>
+      <div id="analytics-modal-body" class="p-6 overflow-y-auto space-y-6 flex-1"></div>
 
       <div class="px-6 py-3.5 border-t border-[#E6E2D8] flex justify-between items-center bg-[#FAF9F6] rounded-b-2xl">
         <span class="text-xs text-slate-500">點擊「執行升級／降級」後將立即更新該生能力檔案並同步寫回試算表</span>
@@ -625,12 +697,14 @@
 
     let currentUser = null;
     let activeQuiz = {
+      isMerged: false,
+      setIds: [],
       setId: "",
       domain: "vernacular",
       tier: "basic",
-      questions: [],
+      questions: [], // 每題均附帶 _sourceSetId
       currentIndex: 0,
-      answers: [],
+      answers: [],   // { questionId, sourceSetId, selectedIndex, isCorrect }
       answeredCurrent: false
     };
 
@@ -924,8 +998,17 @@
       return Array.from(map.values()).sort((a, b) => a.setId.localeCompare(b.setId, undefined, { numeric: true }));
     }
 
+    function getQuestionsForSet(setId) {
+      const info = parseSetCode(setId);
+      let pool = questionsDB.filter(q => String(q.setId).trim() === setId);
+      if (pool.length === 0) {
+        pool = questionsDB.filter(q => q.domain === info.domain && q.tier === info.tier);
+      }
+      return pool.slice(0, 10).map(q => ({ ...q, _sourceSetId: setId }));
+    }
+
     // =========================================================
-    // 5. 學生端畫面渲染
+    // 5. 學生端畫面渲染（含一鍵合併連考 + 自主練習多維篩選）
     // =========================================================
     function renderStudentLobby() {
       const stu = currentUser.data;
@@ -953,9 +1036,11 @@
       const assigned = stu.assignedSets || [];
       const cardsEl = document.getElementById('stu-assigned-cards');
       const progressEl = document.getElementById('stu-assigned-progress');
+      const mergedActionEl = document.getElementById('stu-merged-quiz-action');
 
       if (assigned.length === 0) {
         progressEl.textContent = '今日無指定試卷';
+        mergedActionEl.innerHTML = '';
         cardsEl.innerHTML = `
           <div class="col-span-full card-paper rounded-2xl p-8 text-center text-slate-500 text-sm">
             老師今日尚未派發指定試卷，可先複習下方歷次作答解析。
@@ -965,9 +1050,22 @@
         const doneCount = assigned.filter(sid => todayDoneSetIds.has(sid)).length;
         progressEl.textContent = `今日完成進度：${doneCount} / ${assigned.length} 卷`;
 
+        // 若有 2 份以上指定試卷，提供「合併今日全部試卷一次考完」按鈕
+        if (assigned.length >= 2) {
+          const totalMergedQuestions = assigned.reduce((sum, sid) => sum + getQuestionsForSet(sid).length, 0);
+          mergedActionEl.innerHTML = `
+            <button type="button" onclick="startMergedAssignedQuiz()"
+              class="btn-accent px-4 py-2 rounded-xl text-xs font-semibold shadow-sm inline-flex items-center gap-1.5">
+              <span>合併今日全部試卷（共 ${assigned.length} 卷・${totalMergedQuestions} 題）一次考完</span>
+            </button>
+          `;
+        } else {
+          mergedActionEl.innerHTML = '';
+        }
+
         cardsEl.innerHTML = assigned.map(sid => {
           const info = parseSetCode(sid);
-          const qCount = questionsDB.filter(q => q.setId === sid).length;
+          const qCount = getQuestionsForSet(sid).length;
           const isDoneToday = todayDoneSetIds.has(sid);
           const latestScore = myLogs.find(l => l.setId === sid && l.date === TODAY_STR)?.score;
 
@@ -986,7 +1084,7 @@
               </div>
               <button onclick="startQuizBySet('${sid}')"
                 class="mt-4 w-full py-2.5 rounded-xl text-xs font-semibold ${isDoneToday ? 'bg-[#F2EFE9] text-slate-700 hover:bg-[#E5E0D5]' : 'btn-primary'}">
-                ${isDoneToday ? '再次練習此卷' : '開始作答'}
+                ${isDoneToday ? '單獨再次練習' : '單獨開始作答'}
               </button>
             </div>
           `;
@@ -1005,33 +1103,63 @@
       renderStudentHistoryTable(myLogs);
     }
 
+    function clearFreePracticeFilters() {
+      document.getElementById('stu-free-domain-filter').value = 'all';
+      document.getElementById('stu-free-tier-filter').value = 'all';
+      document.getElementById('stu-free-search-input').value = '';
+      renderFreePracticeCards();
+    }
+
     function renderFreePracticeCards() {
       const stu = currentUser.data;
-      const filterDomain = document.getElementById('stu-free-domain-filter').value;
+      const filterDomain = document.getElementById('stu-free-domain-filter')?.value || 'all';
+      const filterTier = document.getElementById('stu-free-tier-filter')?.value || 'all';
+      const keyword = (document.getElementById('stu-free-search-input')?.value || '').trim().toLowerCase();
+
       const assignedSet = new Set(stu.assignedSets || []);
       const allSets = getAllAvailableSets().filter(s => !assignedSet.has(s.setId));
-      const filtered = filterDomain === 'all' ? allSets : allSets.filter(s => s.domain === filterDomain);
-      const container = document.getElementById('stu-free-cards');
 
+      const filtered = allSets.filter(s => {
+        if (filterDomain !== 'all' && s.domain !== filterDomain) return false;
+        if (filterTier !== 'all' && s.tier !== filterTier) return false;
+        if (keyword) {
+          const haystack = `${s.setId} ${s.fullTitle} ${s.domainName} ${s.tierName}`.toLowerCase();
+          if (!haystack.includes(keyword)) return false;
+        }
+        return true;
+      });
+
+      const countLabel = document.getElementById('stu-free-count-label');
+      if (countLabel) {
+        countLabel.textContent = `顯示 ${filtered.length} / ${allSets.length} 份可練習試卷`;
+      }
+
+      const container = document.getElementById('stu-free-cards');
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-6 text-xs text-slate-500">此分類目前無其他自主練習試卷。</div>`;
+        container.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-slate-500">找不到符合篩選條件的試卷，請嘗試調整題型、難度或搜尋關鍵字。</div>`;
         return;
       }
 
-      container.innerHTML = filtered.map(s => `
-        <div class="bg-white border border-[#DCE7E5] rounded-xl p-4 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="px-2 py-0.5 rounded bg-[#F0F5F4] text-[#3B6E6C] text-[11px] font-bold">${s.setId}</span>
-              <span class="text-[11px] text-slate-400">${s.count} 題</span>
+      container.innerHTML = filtered.map(s => {
+        const tierObj = TIERS[s.tier];
+        return `
+          <div class="bg-white border border-[#DCE7E5] rounded-xl p-4 flex flex-col justify-between hover:border-[#3B6E6C] transition">
+            <div>
+              <div class="flex items-center justify-between gap-1.5 mb-1.5">
+                <div class="flex items-center gap-1.5">
+                  <span class="px-2 py-0.5 rounded bg-[#F0F5F4] text-[#3B6E6C] text-[11px] font-bold">${s.setId}</span>
+                  <span class="px-1.5 py-0.5 rounded border text-[10px] font-semibold ${tierObj.badgeClass}">${tierObj.short}</span>
+                </div>
+                <span class="text-[11px] text-slate-400">${s.count} 題</span>
+              </div>
+              <div class="font-bold text-sm text-[#2C3539]">${s.fullTitle}</div>
             </div>
-            <div class="font-bold text-sm text-[#2C3539]">${s.fullTitle}</div>
+            <button onclick="startQuizBySet('${s.setId}')" class="mt-3 w-full py-2 rounded-lg border border-[#3B6E6C] text-[#3B6E6C] hover:bg-[#3B6E6C] hover:text-white text-xs font-semibold transition">
+              自由練習
+            </button>
           </div>
-          <button onclick="startQuizBySet('${s.setId}')" class="mt-3 w-full py-2 rounded-lg border border-[#3B6E6C] text-[#3B6E6C] hover:bg-[#3B6E6C] hover:text-white text-xs font-semibold transition">
-            自由練習
-          </button>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function renderStudentHistoryTable(myLogs) {
@@ -1169,24 +1297,20 @@
     }
 
     // =========================================================
-    // 6. 測驗引擎
+    // 6. 測驗引擎（支援單卷作答 + 今日全部指定試卷合併連考）
     // =========================================================
     function startQuizBySet(setId) {
       const info = parseSetCode(setId);
-      let pool = questionsDB.filter(q => String(q.setId).trim() === setId);
+      const selected = getQuestionsForSet(setId);
 
-      if (pool.length === 0) {
-        pool = questionsDB.filter(q => q.domain === info.domain && q.tier === info.tier);
-      }
-
-      if (pool.length === 0) {
+      if (selected.length === 0) {
         showToast(`試卷 ${setId} 目前尚無題目，請先於試算表題庫新增`);
         return;
       }
 
-      const selected = pool.slice(0, 10);
-
       activeQuiz = {
+        isMerged: false,
+        setIds: [setId],
         setId: setId,
         domain: info.domain,
         tier: info.tier,
@@ -1197,7 +1321,48 @@
       };
 
       document.getElementById('quiz-set-badge').textContent = setId;
+      document.getElementById('quiz-current-sub-badge').classList.add('hidden');
       document.getElementById('quiz-title').textContent = info.fullTitle;
+      renderCurrentQuestion();
+      showView('view-quiz');
+    }
+
+    // 合併今日全部指定試卷一次連考
+    function startMergedAssignedQuiz() {
+      const stu = currentUser.data;
+      const assigned = stu.assignedSets || [];
+      if (assigned.length === 0) return;
+
+      let combinedQuestions = [];
+      const validSetIds = [];
+
+      assigned.forEach(sid => {
+        const qs = getQuestionsForSet(sid);
+        if (qs.length > 0) {
+          validSetIds.push(sid);
+          combinedQuestions = combinedQuestions.concat(qs);
+        }
+      });
+
+      if (combinedQuestions.length === 0) {
+        showToast('今日指定試卷目前尚無題目，請先確認試算表題庫');
+        return;
+      }
+
+      activeQuiz = {
+        isMerged: true,
+        setIds: validSetIds,
+        setId: validSetIds.join(' + '),
+        domain: parseSetCode(validSetIds[0]).domain,
+        tier: parseSetCode(validSetIds[0]).tier,
+        questions: combinedQuestions,
+        currentIndex: 0,
+        answers: [],
+        answeredCurrent: false
+      };
+
+      document.getElementById('quiz-set-badge').textContent = `合併連考（共 ${validSetIds.length} 卷）`;
+      document.getElementById('quiz-title').textContent = `今日指定試卷綜合評量（${validSetIds.join('、')}）`;
       renderCurrentQuestion();
       showView('view-quiz');
     }
@@ -1211,6 +1376,16 @@
       const pct = Math.round((num / total) * 100);
       document.getElementById('quiz-progress-pct').textContent = `${pct}%`;
       document.getElementById('quiz-progress-bar').style.width = `${pct}%`;
+
+      // 若為合併連考，動態標示目前這題屬於哪一張試卷
+      const subBadge = document.getElementById('quiz-current-sub-badge');
+      if (activeQuiz.isMerged && q._sourceSetId) {
+        const subInfo = parseSetCode(q._sourceSetId);
+        subBadge.classList.remove('hidden');
+        subBadge.textContent = `目前卷別：${q._sourceSetId}（${subInfo.domainName}）`;
+      } else {
+        subBadge.classList.add('hidden');
+      }
 
       const passageBox = document.getElementById('quiz-passage-box');
       const passageContent = document.getElementById('quiz-passage-content');
@@ -1253,6 +1428,7 @@
 
       activeQuiz.answers.push({
         questionId: q.id,
+        sourceSetId: q._sourceSetId || activeQuiz.setId,
         selectedIndex: selectedIdx,
         isCorrect: isCorrect
       });
@@ -1304,66 +1480,108 @@
       }
     }
 
+    // 交卷結算：自動依各試卷代號拆分計算得分並分別寫回試算表
     function finishAndSubmitQuiz() {
       const stu = currentUser.data;
       const total = activeQuiz.questions.length;
       const correctCount = activeQuiz.answers.filter(a => a.isCorrect).length;
-      const score = Math.round((correctCount / total) * 100);
+      const overallScore = Math.round((correctCount / total) * 100);
       const optLabels = ['A', 'B', 'C', 'D'];
-      const info = parseSetCode(activeQuiz.setId);
 
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      const detailsStr = activeQuiz.answers.map((ans, idx) => {
-        const q = activeQuiz.questions[idx];
-        return ans.isCorrect
-          ? `${q.id}:O(${optLabels[ans.selectedIndex]})`
-          : `${q.id}:X(選${optLabels[ans.selectedIndex]}/正${optLabels[q.answer]})`;
-      }).join(', ');
+      const subResults = [];
 
-      const newLog = {
-        date: TODAY_STR,
-        time: timeStr,
-        studentId: stu.id,
-        studentName: stu.name,
-        setId: activeQuiz.setId,
-        domain: activeQuiz.domain,
-        tier: activeQuiz.tier,
-        score: score,
-        correctCount: correctCount,
-        totalQuestions: total,
-        details: detailsStr
-      };
+      activeQuiz.setIds.forEach(sid => {
+        const subPairs = activeQuiz.questions
+          .map((q, idx) => ({ q, ans: activeQuiz.answers[idx] }))
+          .filter(item => (item.q._sourceSetId || activeQuiz.setId) === sid);
 
-      quizLogsDB.push(newLog);
+        if (subPairs.length === 0) return;
 
-      postToGoogleSheet({
-        date: TODAY_STR,
-        time: timeStr,
-        studentId: stu.id,
-        studentName: stu.name,
-        setId: activeQuiz.setId,
-        domainName: info.domainName,
-        tierName: info.tierName,
-        score: score,
-        correctCount: correctCount,
-        totalQuestions: total,
-        details: detailsStr
+        const subTotal = subPairs.length;
+        const subCorrect = subPairs.filter(item => item.ans.isCorrect).length;
+        const subScore = Math.round((subCorrect / subTotal) * 100);
+        const info = parseSetCode(sid);
+
+        const detailsStr = subPairs.map(item => {
+          const { q, ans } = item;
+          return ans.isCorrect
+            ? `${q.id}:O(${optLabels[ans.selectedIndex]})`
+            : `${q.id}:X(選${optLabels[ans.selectedIndex]}/正${optLabels[q.answer]})`;
+        }).join(', ');
+
+        const newLog = {
+          date: TODAY_STR,
+          time: timeStr,
+          studentId: stu.id,
+          studentName: stu.name,
+          setId: sid,
+          domain: info.domain,
+          tier: info.tier,
+          score: subScore,
+          correctCount: subCorrect,
+          totalQuestions: subTotal,
+          details: detailsStr
+        };
+
+        quizLogsDB.push(newLog);
+        subResults.push({ sid, info, subScore, subCorrect, subTotal });
+
+        // 分別寫回 Google 試算表「作答紀錄」
+        postToGoogleSheet({
+          date: TODAY_STR,
+          time: timeStr,
+          studentId: stu.id,
+          studentName: stu.name,
+          setId: sid,
+          domainName: info.domainName,
+          tierName: info.tierName,
+          score: subScore,
+          correctCount: subCorrect,
+          totalQuestions: subTotal,
+          details: detailsStr
+        });
       });
 
-      document.getElementById('result-set-title').textContent = `${activeQuiz.setId} ${info.fullTitle}`;
-      document.getElementById('result-score').textContent = `${score} 分`;
+      // 更新結算畫面
+      if (activeQuiz.isMerged && subResults.length > 1) {
+        document.getElementById('result-set-title').textContent = `今日指定試卷合併評量完成（共 ${subResults.length} 卷）`;
+        document.getElementById('result-sync-subtitle').textContent = '各卷已自動依題型分項計分，並分別寫入學習歷程與試算表';
+        const subBox = document.getElementById('result-subscores-box');
+        const subGrid = document.getElementById('result-subscores-grid');
+        subBox.classList.remove('hidden');
+        subGrid.innerHTML = subResults.map(r => `
+          <div class="p-3 rounded-xl border border-[#E6E2D8] bg-[#FAF9F6] flex items-center justify-between">
+            <div>
+              <span class="px-1.5 py-0.5 rounded bg-[#F0F5F4] text-[#3B6E6C] text-[11px] font-bold">${r.sid}</span>
+              <div class="text-xs font-semibold text-[#2C3539] mt-1">${r.info.domainName}（${r.subCorrect}/${r.subTotal}題）</div>
+            </div>
+            <div class="text-lg font-bold ${r.subScore >= 80 ? 'text-[#3B6E6C]' : 'text-[#C86D51]'}">${r.subScore}分</div>
+          </div>
+        `).join('');
+      } else {
+        const singleInfo = parseSetCode(activeQuiz.setIds[0]);
+        document.getElementById('result-set-title').textContent = `${activeQuiz.setIds[0]} ${singleInfo.fullTitle}`;
+        document.getElementById('result-sync-subtitle').textContent = '作答成績與明細已同步記錄至學習歷程';
+        document.getElementById('result-subscores-box').classList.add('hidden');
+      }
+
+      document.getElementById('result-score').textContent = `${overallScore} 分`;
       document.getElementById('result-correct').textContent = `${correctCount} / ${total}`;
-      document.getElementById('result-rank').textContent = score >= 85 ? '精熟' : (score >= 60 ? '基礎穩固' : '待加強');
+      document.getElementById('result-rank').textContent = overallScore >= 85 ? '精熟' : (overallScore >= 60 ? '基礎穩固' : '待加強');
 
       const reviewEl = document.getElementById('result-review-list');
       reviewEl.innerHTML = activeQuiz.questions.map((q, idx) => {
         const ans = activeQuiz.answers[idx];
+        const sourceTag = activeQuiz.isMerged && q._sourceSetId
+          ? `<span class="px-1.5 py-0.5 rounded bg-[#F0F5F4] text-[#3B6E6C] text-[10px] font-bold mr-1.5">${q._sourceSetId}</span>`
+          : '';
         return `
           <div class="p-3.5 rounded-xl border ${ans.isCorrect ? 'border-emerald-200 bg-emerald-50/40' : 'border-rose-200 bg-rose-50/40'} text-xs">
             <div class="flex items-center justify-between font-bold mb-1">
-              <span class="text-[#2C3539] break-words">第 ${idx + 1} 題：${q.text}</span>
+              <span class="text-[#2C3539] break-words">${sourceTag}第 ${idx + 1} 題：${q.text}</span>
               <span class="${ans.isCorrect ? 'text-emerald-700' : 'text-rose-700'} shrink-0 ml-2">
                 ${ans.isCorrect ? '✓ 正確' : `✕ 選 ${optLabels[ans.selectedIndex]}（正 ${optLabels[q.answer]}）`}
               </span>
@@ -1382,7 +1600,7 @@
     }
 
     // =========================================================
-    // 7. 教師管理後台（多班級群組篩選 + 統一派卷 + 權限隔離）
+    // 7. 教師管理後台（含查詢學生 + 多班級群組篩選 + 統一派卷）
     // =========================================================
     function switchTeacherTab(tab) {
       const dailyTab = document.getElementById('t-tab-daily');
@@ -1406,6 +1624,22 @@
         filterBar.classList.add('hidden');
         renderTeacherProfilesTable();
       }
+    }
+
+    function clearTeacherSearch(inputId, rerenderFn) {
+      const el = document.getElementById(inputId);
+      if (el) el.value = '';
+      if (typeof rerenderFn === 'function') rerenderFn();
+    }
+
+    function filterStudentsByQuery(list, query) {
+      const q = String(query || '').trim().toLowerCase();
+      if (!q) return list;
+      return list.filter(stu => {
+        const groupsText = (stu.classGroups || []).join(' ');
+        const haystack = `${stu.id} ${stu.name} ${groupsText}`.toLowerCase();
+        return haystack.includes(q);
+      });
     }
 
     function populateTeacherClassFilter() {
@@ -1483,15 +1717,16 @@
       const selectedClass = document.getElementById('t-filter-class')?.value || 'all';
       const selectedDate = document.getElementById('t-filter-date')?.value || TODAY_STR;
       const selectedDomain = document.getElementById('t-filter-domain')?.value || 'all';
+      const searchQuery = document.getElementById('t-search-student-daily')?.value || '';
 
-      const targetStudents = getFilteredTeacherStudents();
-      const targetStudentIds = new Set(targetStudents.map(s => String(s.id)));
+      const groupStudents = getFilteredTeacherStudents();
+      const targetStudentIds = new Set(groupStudents.map(s => String(s.id)));
 
       const batchBadge = document.getElementById('batch-target-class-badge');
       if (batchBadge) {
         batchBadge.textContent = selectedClass === 'all'
-          ? `對象：全部授權學生（${targetStudents.length}人）`
-          : `對象：${selectedClass} 群組（${targetStudents.length}人）`;
+          ? `對象：全部授權學生（${groupStudents.length}人）`
+          : `對象：${selectedClass} 群組（${groupStudents.length}人）`;
       }
 
       const dayLogs = quizLogsDB.filter(l => l.date === selectedDate && targetStudentIds.has(String(l.studentId)));
@@ -1528,14 +1763,21 @@
         `;
       }).join('');
 
-      renderTeacherStudentsTable(targetStudents, filteredLogs);
-      renderTeacherLogsTable(filteredLogs);
+      // 依查詢框篩選顯示在表格中的學生與明細
+      const searchedStudents = filterStudentsByQuery(groupStudents, searchQuery);
+      const searchedStudentIds = new Set(searchedStudents.map(s => String(s.id)));
+      const searchedLogs = searchQuery.trim()
+        ? filteredLogs.filter(l => searchedStudentIds.has(String(l.studentId)))
+        : filteredLogs;
+
+      renderTeacherStudentsTable(searchedStudents, filteredLogs);
+      renderTeacherLogsTable(searchedLogs);
     }
 
     function renderTeacherStudentsTable(targetStudents, filteredLogs) {
       const tbody = document.getElementById('t-students-tbody');
       if (targetStudents.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-xs text-slate-400">目前篩選範圍內尚無學生資料。</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-xs text-slate-400">查無符合條件的學生資料。</td></tr>`;
         return;
       }
 
@@ -1545,7 +1787,6 @@
           ? Math.round(stuLogs.reduce((s, l) => s + l.score, 0) / stuLogs.length)
           : null;
 
-        // 檢查該生是否有任一科目達到升級或降級建議，給予小紅點/綠點提示
         const evalResults = Object.keys(DOMAINS).map(dKey => evaluateDomainRecommendation(stu, dKey));
         const hasUpgrade = evalResults.some(r => r.action === 'upgrade');
         const hasDowngrade = evalResults.some(r => r.action === 'downgrade');
@@ -1751,13 +1992,15 @@
     function renderTeacherProfilesTable() {
       const tbody = document.getElementById('t-profiles-tbody');
       const authStudents = getAuthorizedStudents();
+      const searchQuery = document.getElementById('t-search-student-profiles')?.value || '';
+      const filteredStudents = filterStudentsByQuery(authStudents, searchQuery);
 
-      if (authStudents.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-xs text-slate-400">權限範圍內尚無學生資料。</td></tr>`;
+      if (filteredStudents.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-xs text-slate-400">查無符合條件的學生資料。</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = authStudents.map(stu => `
+      tbody.innerHTML = filteredStudents.map(stu => `
         <tr class="hover:bg-[#FAF9F6]">
           <td class="py-3.5 px-4">
             <div class="font-bold text-[#2C3539]">${stu.name}</div>
@@ -1824,7 +2067,6 @@
     function evaluateDomainRecommendation(stu, domainKey) {
       const curTier = stu.levels?.[domainKey] || 'basic';
       const curIdx = TIER_ORDER.indexOf(curTier);
-      // 篩選該生在該領域、且屬於「目前能力等級」的歷次作答紀錄（按作答順序）
       const domainLogs = quizLogsDB.filter(l =>
         String(l.studentId) === String(stu.id) &&
         l.domain === domainKey &&
@@ -1857,7 +2099,6 @@
         ? Math.round(last3.reduce((s, l) => s + l.score, 0) / 3)
         : null;
 
-      // 升級判斷（尚未達最高級精熟組）
       if (curIdx < TIER_ORDER.length - 1) {
         const isTwoPerfect = last2.every(l => l.score === 100);
         const isThreeHigh = last3.length === 3 && avgLast3 >= 90 && last3.every(l => l.score >= 80);
@@ -1876,7 +2117,6 @@
         }
       }
 
-      // 降級判斷（尚未達最低級基礎組）
       if (curIdx > 0) {
         const isTwoFail = last2.every(l => l.score < 60);
         const isThreeFail = last3.length === 3 && avgLast3 < 60;
@@ -1923,7 +2163,6 @@
         ? Math.max(...stuLogs.map(l => l.score))
         : null;
 
-      // 五向度診斷卡 HTML
       const domainCardsHtml = Object.keys(DOMAINS).map(dKey => {
         const dObj = DOMAINS[dKey];
         const evalRes = evaluateDomainRecommendation(stu, dKey);
@@ -1983,7 +2222,6 @@
         `;
       }).join('');
 
-      // 該生歷次作答明細表 HTML
       const historyRowsHtml = stuLogs.length === 0
         ? `<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">該生目前尚無作答紀錄。</td></tr>`
         : [...stuLogs].reverse().map(log => {
@@ -2002,7 +2240,6 @@
 
       const bodyEl = document.getElementById('analytics-modal-body');
       bodyEl.innerHTML = `
-        <!-- 頂部 3 項個人總覽指標 -->
         <div class="grid grid-cols-3 gap-3">
           <div class="p-3.5 rounded-xl bg-[#FAF9F6] border border-[#E6E2D8] text-center">
             <div class="text-xs text-slate-500">累計完成試卷</div>
@@ -2018,7 +2255,6 @@
           </div>
         </div>
 
-        <!-- 五向度適性升降級診斷卡片區 -->
         <div>
           <h4 class="font-serif-tc text-base font-bold text-[#2C3539] mb-2.5">五向度能力診斷與升降級建議</h4>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -2026,7 +2262,6 @@
           </div>
         </div>
 
-        <!-- 該生完整作答紀錄列表 -->
         <div>
           <h4 class="font-serif-tc text-base font-bold text-[#2C3539] mb-2.5">歷次作答紀錄明細（由新到舊）</h4>
           <div class="border border-[#E6E2D8] rounded-xl overflow-hidden">
@@ -2061,7 +2296,7 @@
       if (!stu) return;
       stu.levels[domainKey] = newTier;
       syncStudentProfileToSheet(stu);
-      openStudentAnalyticsModal(studentId); // 立即刷新分析視窗內的診斷狀態
+      openStudentAnalyticsModal(studentId);
       renderTeacherDashboard();
       showToast(`已將 ${stu.name} 的「${DOMAINS[domainKey].name}」調整為${TIERS[newTier].name}並同步試算表`);
     }
