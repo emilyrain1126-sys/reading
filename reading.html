@@ -136,7 +136,7 @@
       <div class="card-paper rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div class="flex flex-wrap items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-md bg-[#F0F5F4] text-[#3B6E6C] text-xs font-semibold" id="stu-badge-class">班級</span>
+            <div id="stu-badge-classes" class="flex flex-wrap gap-1.5"></div>
             <span class="px-2.5 py-0.5 rounded-md bg-[#F2EFE9] text-slate-700 text-xs font-semibold" id="stu-badge-id">學號</span>
             <h2 class="font-serif-tc text-xl sm:text-2xl font-bold text-[#2C3539]" id="stu-welcome-name">同學你好</h2>
           </div>
@@ -309,7 +309,7 @@
           </button>
           <button id="t-tab-profiles" onclick="switchTeacherTab('profiles')"
             class="px-4 py-2 rounded-xl text-sm font-semibold bg-[#F2EFE9] text-slate-700 hover:bg-[#E7E2D8] transition">
-            學生能力值與班級歸屬
+            學生能力值與多班級歸屬
           </button>
           <span id="teacher-scope-badge" class="px-2.5 py-1 rounded-lg bg-[#FAF8F3] border border-[#E5DFD3] text-[11px] font-medium text-[#8A795D]">
             權限範圍：全部班級
@@ -351,7 +351,6 @@
 
       <!-- 分頁 1：每日分卷成績與群組派卷管理 -->
       <div id="t-panel-daily" class="space-y-6">
-        <!-- 當日數據摘要卡 -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div class="card-paper rounded-2xl p-4">
             <div class="text-xs text-slate-500">範圍內完成人次</div>
@@ -379,7 +378,7 @@
                   對象：全部授權學生
                 </span>
               </div>
-              <p class="text-xs text-slate-500 mt-0.5">操作將套用至上方「班級群組」目前選定的群組，依學生各自永久能力值自動配發對應難度試卷。</p>
+              <p class="text-xs text-slate-500 mt-0.5">操作將套用至上方「班級群組」目前選定的群組（含同時隸屬多個班級的成員），依學生各自永久能力值自動配發對應難度試卷。</p>
             </div>
             <div class="flex items-center gap-2">
               <select id="batch-round-select" class="px-3 py-2 rounded-xl border border-[#C8D5D2] bg-white text-xs font-semibold text-[#2C3539]">
@@ -426,7 +425,7 @@
             <table class="w-full text-left border-collapse text-sm">
               <thead>
                 <tr class="bg-[#F6F4EF] border-b border-[#E6E2D8] text-xs text-slate-600">
-                  <th class="py-3 px-4 font-semibold w-36">班級 / 學號姓名</th>
+                  <th class="py-3 px-4 font-semibold w-44">所屬群組 / 學號姓名</th>
                   <th class="py-3 px-4 font-semibold">目前指定試卷（點 × 移除 / 三段式新增）</th>
                   <th class="py-3 px-4 font-semibold w-32">該日平均得分</th>
                   <th class="py-3 px-4 font-semibold w-44">該日已完成卷別</th>
@@ -447,7 +446,7 @@
               <thead>
                 <tr class="bg-[#F6F4EF] border-b border-[#E6E2D8] text-xs text-slate-600">
                   <th class="py-3 px-4 font-semibold">時間</th>
-                  <th class="py-3 px-4 font-semibold">班級 / 學號姓名</th>
+                  <th class="py-3 px-4 font-semibold">群組 / 學號姓名</th>
                   <th class="py-3 px-4 font-semibold">試卷代號</th>
                   <th class="py-3 px-4 font-semibold">測驗分卷</th>
                   <th class="py-3 px-4 font-semibold">得分</th>
@@ -460,19 +459,19 @@
         </div>
       </div>
 
-      <!-- 分頁 2：學生五向度永久能力值與班級歸屬檔案 -->
+      <!-- 分頁 2：學生五向度永久能力值與多班級歸屬檔案 -->
       <div id="t-panel-profiles" class="hidden">
         <div class="card-paper rounded-2xl overflow-hidden">
           <div class="px-5 py-4 border-b border-[#E6E2D8]">
-            <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">學生五向度能力值與班級群組檔案</h3>
-            <p class="text-xs text-slate-500 mt-0.5">可調整每位學生的所屬班級群組及五大領域長期能力等級（基礎／進階／精熟），修改後自動寫回試算表。</p>
+            <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">學生五向度能力值與多班級群組檔案</h3>
+            <p class="text-xs text-slate-500 mt-0.5">一位學生可同時隸屬多個班級群組（請用逗號分隔，例如：<code class="bg-slate-100 px-1 rounded">801, 閱讀加強班</code>），修改後自動寫回試算表。</p>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
               <thead>
                 <tr class="bg-[#F6F4EF] border-b border-[#E6E2D8] text-xs text-slate-600">
                   <th class="py-3 px-4 font-semibold">學號 / 姓名</th>
-                  <th class="py-3 px-4 font-semibold">班級群組</th>
+                  <th class="py-3 px-4 font-semibold">所屬班級群組（逗號分隔可多填）</th>
                   <th class="py-3 px-4 font-semibold">A 白話文閱讀</th>
                   <th class="py-3 px-4 font-semibold">B 國字注音</th>
                   <th class="py-3 px-4 font-semibold">C 文言文閱讀</th>
@@ -557,7 +556,7 @@
 
   <script>
     // =========================================================
-    // 1. Google Apps Script 部署網址設定（已更新為您的最新部署連結）
+    // 1. Google Apps Script 部署網址設定
     // =========================================================
     const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbynv2wu83C2iQP4FH29VWgW5UJ-pXMIm0gaNe2FEuNIgci53FxM-Z5sbKyCDg36m6X1QQ/exec";
 
@@ -678,10 +677,12 @@
     function applySheetData(data, showAlert) {
       const statusEl = document.getElementById('sheet-sync-status');
       if (Array.isArray(data.students)) {
-        studentsDB = data.students.map(s => ({
-          ...s,
-          classGroup: s.classGroup || '未分班'
-        }));
+        studentsDB = data.students.map(s => {
+          const groups = Array.isArray(s.classGroups) && s.classGroups.length > 0
+            ? s.classGroups
+            : (s.classGroup ? String(s.classGroup).split(/[,，]/).map(g => g.trim()).filter(Boolean) : ['未分班']);
+          return { ...s, classGroups: groups };
+        });
       }
       if (Array.isArray(data.questions)) questionsDB = data.questions;
       if (Array.isArray(data.logs)) quizLogsDB = data.logs;
@@ -722,7 +723,7 @@
     }
 
     // =========================================================
-    // 3. 登入、登出與權限過濾工具
+    // 3. 登入、登出與多群組權限過濾工具
     // =========================================================
     function showView(viewId) {
       ['view-login', 'view-student-lobby', 'view-quiz', 'view-quiz-result', 'view-teacher-dashboard'].forEach(id => {
@@ -808,7 +809,7 @@
       showToast(`已登入教師管理後台（${matched.name}）`);
     }
 
-    // 依目前登入老師的 scope 權限，取得該老師有權檢視的學生清單
+    // 只要學生的「任一所屬群組」或「學號」符合該老師的負責範圍，就能看到該生
     function getAuthorizedStudents() {
       const teacher = currentUser?.data;
       if (!teacher || !teacher.scope || teacher.scope === 'ALL') {
@@ -816,7 +817,7 @@
       }
       const allowedTokens = new Set(teacher.scope.map(s => String(s).trim()));
       return studentsDB.filter(stu =>
-        allowedTokens.has(String(stu.classGroup).trim()) || allowedTokens.has(String(stu.id).trim())
+        (stu.classGroups || []).some(g => allowedTokens.has(g)) || allowedTokens.has(String(stu.id).trim())
       );
     }
 
@@ -828,8 +829,9 @@
       }
 
       if (currentUser.role === 'student') {
+        const groupLabel = (currentUser.data.classGroups || []).join('、');
         navArea.innerHTML = `
-          <span class="text-xs font-medium text-slate-600 hidden sm:inline">${currentUser.data.classGroup}・${currentUser.data.id} ${currentUser.data.name}</span>
+          <span class="text-xs font-medium text-slate-600 hidden sm:inline">${groupLabel}・${currentUser.data.id} ${currentUser.data.name}</span>
           <button onclick="openPasswordModal()" class="px-3 py-1.5 rounded-lg border border-[#DCD7CD] text-xs font-medium text-slate-700 hover:bg-[#F6F4EF]">
             修改密碼
           </button>
@@ -908,7 +910,10 @@
     // =========================================================
     function renderStudentLobby() {
       const stu = currentUser.data;
-      document.getElementById('stu-badge-class').textContent = stu.classGroup || '未分班';
+      const classesEl = document.getElementById('stu-badge-classes');
+      classesEl.innerHTML = (stu.classGroups || ['未分班']).map(g =>
+        `<span class="px-2.5 py-0.5 rounded-md bg-[#F0F5F4] text-[#3B6E6C] text-xs font-semibold">${g}</span>`
+      ).join('');
       document.getElementById('stu-badge-id').textContent = `學號 ${stu.id}`;
       document.getElementById('stu-welcome-name').textContent = `${stu.name} 同學，歡迎回來`;
 
@@ -1356,7 +1361,7 @@
     }
 
     // =========================================================
-    // 7. 教師管理後台（權限隔離 + 班級群組統一派卷 + 換日統計）
+    // 7. 教師管理後台（多班級群組篩選 + 統一派卷 + 權限隔離）
     // =========================================================
     function switchTeacherTab(tab) {
       const dailyTab = document.getElementById('t-tab-daily');
@@ -1388,8 +1393,12 @@
       if (!select) return;
 
       const teacher = currentUser?.data;
+      const allowedScopeSet = (!teacher?.scope || teacher.scope === 'ALL')
+        ? null
+        : new Set(teacher.scope.map(s => String(s).trim()));
+
       if (scopeBadge) {
-        scopeBadge.textContent = (!teacher?.scope || teacher.scope === 'ALL')
+        scopeBadge.textContent = !allowedScopeSet
           ? '權限範圍：全校所有班級'
           : `負責範圍：${teacher.scope.join('、')}`;
       }
@@ -1397,7 +1406,11 @@
       const authStudents = getAuthorizedStudents();
       const classSet = new Set();
       authStudents.forEach(s => {
-        if (s.classGroup) classSet.add(s.classGroup);
+        (s.classGroups || []).forEach(g => {
+          if (!allowedScopeSet || allowedScopeSet.has(g)) {
+            classSet.add(g);
+          }
+        });
       });
 
       const sortedClasses = Array.from(classSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
@@ -1405,7 +1418,7 @@
 
       select.innerHTML = `<option value="all">全部授權班級（${authStudents.length}人）</option>` +
         sortedClasses.map(c => {
-          const count = authStudents.filter(s => s.classGroup === c).length;
+          const count = authStudents.filter(s => (s.classGroups || []).includes(c)).length;
           return `<option value="${c}">${c}（${count}人）</option>`;
         }).join('');
 
@@ -1438,12 +1451,11 @@
       select.innerHTML = sorted.map(r => `<option value="${r}">第 ${r} 卷</option>`).join('');
     }
 
-    // 取得目前老師「授權範圍內」且符合「目前選定班級群組」的學生
     function getFilteredTeacherStudents() {
       const authStudents = getAuthorizedStudents();
       const selectedClass = document.getElementById('t-filter-class')?.value || 'all';
       if (selectedClass === 'all') return authStudents;
-      return authStudents.filter(s => s.classGroup === selectedClass);
+      return authStudents.filter(s => (s.classGroups || []).includes(selectedClass));
     }
 
     function renderTeacherDashboard() {
@@ -1454,7 +1466,6 @@
       const targetStudents = getFilteredTeacherStudents();
       const targetStudentIds = new Set(targetStudents.map(s => String(s.id)));
 
-      // 更新批次派卷控制台的目標群組徽章
       const batchBadge = document.getElementById('batch-target-class-badge');
       if (batchBadge) {
         batchBadge.textContent = selectedClass === 'all'
@@ -1462,7 +1473,6 @@
           : `對象：${selectedClass} 群組（${targetStudents.length}人）`;
       }
 
-      // 只統計目標群組學生在該日的紀錄
       const dayLogs = quizLogsDB.filter(l => l.date === selectedDate && targetStudentIds.has(String(l.studentId)));
       const filteredLogs = selectedDomain === 'all'
         ? dayLogs
@@ -1514,6 +1524,10 @@
           ? Math.round(stuLogs.reduce((s, l) => s + l.score, 0) / stuLogs.length)
           : null;
 
+        const groupBadges = (stu.classGroups || ['未分班']).map(g =>
+          `<span class="inline-block px-1.5 py-0.5 rounded bg-[#F2EFE9] text-slate-600 text-[10px] font-semibold">${g}</span>`
+        ).join(' ');
+
         const assignedTags = (stu.assignedSets || []).map(sid => `
           <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F0F5F4] text-[#3B6E6C] border border-[#CFE0DD] text-xs font-bold">
             ${sid}
@@ -1526,7 +1540,7 @@
         return `
           <tr class="hover:bg-[#FAF9F6] align-top">
             <td class="py-3.5 px-4">
-              <span class="inline-block px-1.5 py-0.5 rounded bg-[#F2EFE9] text-slate-600 text-[10px] font-semibold mb-1">${stu.classGroup}</span>
+              <div class="flex flex-wrap gap-1 mb-1">${groupBadges}</div>
               <div class="font-bold text-[#2C3539]">${stu.name}</div>
               <div class="text-[11px] text-slate-400">${stu.id}</div>
             </td>
@@ -1622,7 +1636,6 @@
       showToast(`已移除 ${stu.name} 的試卷 ${setId}`);
     }
 
-    // 依目前選定的班級群組與各自能力值批次統一派卷
     function executeBatchDispatch() {
       const checkedDomains = Array.from(document.querySelectorAll('.batch-domain-cb:checked')).map(cb => cb.value);
       if (checkedDomains.length === 0) {
@@ -1686,12 +1699,12 @@
       tbody.innerHTML = [...filteredLogs].reverse().map(log => {
         const info = parseSetCode(log.setId);
         const stuObj = studentsDB.find(s => String(s.id) === String(log.studentId));
-        const classTag = stuObj?.classGroup || '';
+        const groupLabel = (stuObj?.classGroups || []).join('、');
         return `
           <tr class="hover:bg-[#FAF9F6]">
             <td class="py-3 px-4 text-xs text-slate-500">${log.time || '--'}</td>
             <td class="py-3 px-4 text-xs font-bold text-[#2C3539]">
-              ${classTag ? `<span class="px-1.5 py-0.5 rounded bg-[#F2EFE9] text-slate-600 text-[10px] mr-1">${classTag}</span>` : ''}
+              ${groupLabel ? `<span class="px-1.5 py-0.5 rounded bg-[#F2EFE9] text-slate-600 text-[10px] mr-1">${groupLabel}</span>` : ''}
               ${log.studentId} ${log.studentName}
             </td>
             <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-[#F0F5F4] text-[#3B6E6C] text-xs font-bold">${log.setId}</span></td>
@@ -1704,88 +1717,3 @@
     }
 
     function renderTeacherProfilesTable() {
-      const tbody = document.getElementById('t-profiles-tbody');
-      const authStudents = getAuthorizedStudents();
-
-      if (authStudents.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-xs text-slate-400">權限範圍內尚無學生資料。</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = authStudents.map(stu => `
-        <tr class="hover:bg-[#FAF9F6]">
-          <td class="py-3.5 px-4">
-            <div class="font-bold text-[#2C3539]">${stu.name}</div>
-            <div class="text-[11px] text-slate-400">${stu.id}</div>
-          </td>
-          <td class="py-3.5 px-4">
-            <input type="text" value="${stu.classGroup || '未分班'}"
-              onchange="updateStudentClassGroup('${stu.id}', this.value)"
-              class="w-24 px-2.5 py-1 rounded-lg border border-[#DCD7CD] bg-[#FAF9F6] focus:bg-white text-xs font-semibold text-[#2C3539]" />
-          </td>
-          ${Object.keys(DOMAINS).map(dKey => {
-            const curTier = stu.levels[dKey] || 'basic';
-            return `
-              <td class="py-3.5 px-4">
-                <select onchange="updateStudentPermanentLevel('${stu.id}', '${dKey}', this.value)"
-                  class="px-2.5 py-1.5 rounded-lg border text-xs font-semibold ${TIERS[curTier].badgeClass}">
-                  <option value="basic" ${curTier === 'basic' ? 'selected' : ''}>基礎組</option>
-                  <option value="intermediate" ${curTier === 'intermediate' ? 'selected' : ''}>進階組</option>
-                  <option value="advanced" ${curTier === 'advanced' ? 'selected' : ''}>精熟組</option>
-                </select>
-              </td>
-            `;
-          }).join('')}
-        </tr>
-      `).join('');
-    }
-
-    function updateStudentClassGroup(studentId, newGroup) {
-      const stu = studentsDB.find(s => String(s.id) === String(studentId));
-      if (!stu) return;
-      stu.classGroup = String(newGroup || '').trim() || '未分班';
-      syncStudentProfileToSheet(stu);
-      populateTeacherClassFilter();
-      showToast(`已將 ${stu.name} 歸類至「${stu.classGroup}」`);
-    }
-
-    function updateStudentPermanentLevel(studentId, domainKey, newTier) {
-      const stu = studentsDB.find(s => String(s.id) === String(studentId));
-      if (!stu) return;
-      stu.levels[domainKey] = newTier;
-      syncStudentProfileToSheet(stu);
-      renderTeacherProfilesTable();
-      showToast(`已更新 ${stu.name} 的「${DOMAINS[domainKey].name}」為${TIERS[newTier].name}`);
-    }
-
-    function syncStudentProfileToSheet(stu) {
-      postToGoogleSheet({
-        action: 'updateStudentProfile',
-        studentId: stu.id,
-        classGroup: stu.classGroup || '未分班',
-        levels: stu.levels,
-        assignedSets: (stu.assignedSets || []).join(', ')
-      });
-    }
-
-    // =========================================================
-    // 8. 全域提示訊息與啟動初始化
-    // =========================================================
-    let toastTimer = null;
-    function showToast(msg) {
-      const box = document.getElementById('toast-box');
-      const text = document.getElementById('toast-msg');
-      text.textContent = msg;
-      box.classList.remove('hidden');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        box.classList.add('hidden');
-      }, 3200);
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      syncFromGoogleSheet(false);
-    });
-  </script>
-</body>
-</html>
