@@ -38,6 +38,7 @@
     .btn-accent:hover {
       background-color: #B25B40;
     }
+    /* 國文直式注音 Ruby 樣式 */
     ruby {
       ruby-align: center;
       margin: 0 1px;
@@ -47,6 +48,7 @@
       color: #526066;
       font-family: 'Noto Sans TC', sans-serif;
     }
+    /* 自訂書卷捲軸 */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -146,7 +148,7 @@
           </button>
         </form>
 
-        <!-- 底部試算表連線狀態列 -->
+        <!-- 底部試算表連線狀態列（簡潔顯示狀態，不暴露技術錯誤細節） -->
         <div class="mt-6 pt-4 border-t border-[#ECE8DF] flex items-center justify-between text-xs">
           <div id="sheet-sync-status">
             <span class="text-slate-500">⏳ 正在連線試算表...</span>
@@ -202,7 +204,7 @@
         <div id="stu-assigned-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
 
-      <!-- 自主延伸練習考卷區 -->
+      <!-- 自主延伸練習考卷區（已測驗過預設隱藏，可切換篩選再次練習） -->
       <div id="stu-free-practice-wrapper" class="hidden pt-2">
         <div class="bg-[#F4F8F7] border border-[#CFE0DD] rounded-2xl p-5 sm:p-6">
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
@@ -210,7 +212,7 @@
               <span class="inline-block px-2.5 py-0.5 rounded-full bg-[#3B6E6C] text-white text-[11px] font-semibold mb-1">
                 已解鎖自主考卷題庫
               </span>
-              <h3 class="font-serif-tc text-lg font-bold text-[#2C3539]">自主延伸練習考卷（每卷 10 題）</h3>
+              <h3 class="font-serif-tc text-lg font-bold text-[#2C3539]">自主延伸練習考卷（每卷 10 題以上）</h3>
               <p class="text-xs text-slate-600 mt-0.5">已考過的考卷會自動隱藏以保持版面清爽；如需再次練習，可於右側切換「已測驗考卷」。</p>
             </div>
 
@@ -620,18 +622,24 @@
         </div>
       </div>
 
-      <!-- 分頁 3：教師信箱已讀狀態檢視 -->
+      <!-- 分頁 3：教師信箱已讀狀態檢視與撰寫新信件 -->
       <div id="t-panel-mailbox" class="hidden">
         <div class="card-paper rounded-2xl overflow-hidden">
           <div class="px-5 py-4 border-b border-[#E6E2D8] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">試算表「教師信箱」發送與學生已讀追蹤</h3>
-              <p class="text-xs text-slate-500 mt-0.5">在 Google 試算表「教師信箱」分頁新增留言後，學生登入開啟信件即會自動將已讀時間與名單寫回試算表 F、G 欄。</p>
+              <p class="text-xs text-slate-500 mt-0.5">可直接點擊右側撰寫信件，或在 Google 試算表「教師信箱」新增留言；學生點開信件後會自動回報已讀。</p>
             </div>
-            <button onclick="syncFromGoogleSheet(true)"
-              class="px-3 py-1.5 rounded-lg border border-[#3B6E6C] text-[#3B6E6C] hover:bg-[#F0F5F4] text-xs font-semibold shrink-0">
-              ↻ 重新整理已讀狀態
-            </button>
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" onclick="openTeacherComposeMailModal()"
+                class="btn-primary px-3 py-1.5 rounded-lg text-xs font-semibold">
+                ＋ 撰寫新信件
+              </button>
+              <button onclick="syncFromGoogleSheet(true)"
+                class="px-3 py-1.5 rounded-lg border border-[#3B6E6C] text-[#3B6E6C] hover:bg-[#F0F5F4] text-xs font-semibold">
+                ↻ 重新整理已讀狀態
+              </button>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
@@ -651,13 +659,13 @@
         </div>
       </div>
 
-      <!-- 分頁 4：學生舉手發問箱 -->
+      <!-- 分頁 4：學生舉手發問箱（支援直接回覆並寄送系統信） -->
       <div id="t-panel-questions" class="hidden">
         <div class="card-paper rounded-2xl overflow-hidden">
           <div class="px-5 py-4 border-b border-[#E6E2D8] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 class="font-serif-tc text-base font-bold text-[#2C3539]">🙋 學生舉手發問紀錄（同步寫入試算表「學生提問」分頁）</h3>
-              <p class="text-xs text-slate-500 mt-0.5">學生在練習或檢討解析時點擊「舉手發問」送出的疑問會彙整於此，老師可於課堂講解後標記為「已解惑」。</p>
+              <p class="text-xs text-slate-500 mt-0.5">點擊右側「✍️ 回覆並寄信」可直接輸入解答，系統會自動更新提問狀態並寄送系統信件給該位學生。</p>
             </div>
             <button onclick="syncFromGoogleSheet(true)"
               class="px-3 py-1.5 rounded-lg border border-[#3B6E6C] text-[#3B6E6C] hover:bg-[#F0F5F4] text-xs font-semibold shrink-0">
@@ -672,7 +680,7 @@
                   <th class="py-3 px-4 font-semibold w-36">班級 / 學生</th>
                   <th class="py-3 px-4 font-semibold w-28">試卷 / 題號</th>
                   <th class="py-3 px-4 font-semibold">題目摘要與學生提問內容</th>
-                  <th class="py-3 px-4 font-semibold w-32 text-right">處理狀態</th>
+                  <th class="py-3 px-4 font-semibold w-36 text-right">處理狀態與回覆</th>
                 </tr>
               </thead>
               <tbody id="t-student-questions-tbody" class="divide-y divide-[#EFECE6]"></tbody>
@@ -862,7 +870,7 @@
       <div class="px-6 py-4 border-b border-[#E6E2D8] flex items-center justify-between bg-[#FAF9F6] rounded-t-2xl">
         <div>
           <h3 class="font-serif-tc text-lg font-bold text-[#2C3539]">🙋 我的舉手發問紀錄</h3>
-          <p class="text-xs text-slate-500 mt-0.5">檢視你向老師發問過的題目與目前的解惑處理狀態</p>
+          <p class="text-xs text-slate-500 mt-0.5">檢視你向老師發問過的題目與老師的回覆解答</p>
         </div>
         <button onclick="closeStudentMyAsksModal()" class="text-slate-400 hover:text-slate-700 text-lg">✕</button>
       </div>
@@ -875,7 +883,88 @@
     </div>
   </div>
 
-  <!-- ==================== 彈窗 8：圖片放大檢視 Lightbox ==================== -->
+  <!-- ==================== 彈窗 8：教師「✍️ 回覆學生提問並寄送系統信」 ==================== -->
+  <div id="modal-teacher-reply-ask" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl border border-[#E6E2D8]">
+      <div class="px-6 py-4 border-b border-[#E6E2D8] flex items-center justify-between bg-[#FAF9F6] rounded-t-2xl">
+        <div>
+          <h3 class="font-serif-tc text-lg font-bold text-[#2C3539]">✍️ 回覆學生提問並寄送系統信</h3>
+          <p class="text-xs text-slate-500 mt-0.5" id="reply-ask-subtitle">收件學生：--</p>
+        </div>
+        <button onclick="closeTeacherReplyAskModal()" class="text-slate-400 hover:text-slate-700 text-lg">✕</button>
+      </div>
+
+      <form onsubmit="submitTeacherReplyAskForm(event)" class="p-6 overflow-y-auto space-y-4 flex-1">
+        <div class="p-3.5 rounded-xl bg-[#FAF8F3] border border-[#E5DFD3] space-y-2 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[#3B6E6C]" id="reply-ask-set-meta">試卷 A-a-1 ｜ 題號 A001</span>
+            <span class="text-slate-400" id="reply-ask-time">--</span>
+          </div>
+          <div class="text-slate-700 font-medium bg-white p-2.5 rounded-lg border border-[#EFECE6]" id="reply-ask-student-msg">
+            學生提問內容...
+          </div>
+          <div id="reply-ask-original-q" class="text-slate-600 leading-relaxed pt-1"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">教師解答與說明（將同步寫入「學生提問」並作為系統信內文）</label>
+          <textarea id="reply-ask-textarea" required rows="5" placeholder="請輸入給這位同學的解答與提示..."
+            class="w-full p-3.5 rounded-xl border border-[#DCD7CD] text-sm focus:outline-none focus:border-[#3B6E6C]"></textarea>
+        </div>
+
+        <label class="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer bg-[#F4F8F7] p-3 rounded-xl border border-[#DCE7E5]">
+          <input type="checkbox" id="reply-ask-sendmail-cb" checked class="accent-[#3B6E6C] w-4 h-4" />
+          <span>同時寄出系統信件至該生「✉️ 教師信箱」（學生登入會看到未讀提醒，點開後自動回報已讀）</span>
+        </label>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-[#ECE8DF]">
+          <button type="button" onclick="closeTeacherReplyAskModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">
+            取消
+          </button>
+          <button type="submit" class="btn-primary px-5 py-2.5 rounded-xl text-xs font-semibold">
+            確認送出回覆並寄信
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 彈窗 9：教師「＋ 撰寫新系統信件」 ==================== -->
+  <div id="modal-teacher-compose-mail" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-[#E6E2D8]">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-serif-tc text-lg font-bold text-[#2C3539]">✉️ 撰寫系統信件給學生</h3>
+        <button onclick="closeTeacherComposeMailModal()" class="text-slate-400 hover:text-slate-700 text-lg">✕</button>
+      </div>
+      <form onsubmit="submitTeacherComposeMailForm(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">收件對象（學號如 <code class="bg-slate-100 px-1 rounded">80101</code>、班級如 <code class="bg-slate-100 px-1 rounded">801</code>，或填 <code class="bg-slate-100 px-1 rounded">ALL</code> 寄全體）</label>
+          <input type="text" id="compose-mail-target" required placeholder="例如：80101 或 801 或 ALL"
+            class="w-full px-3.5 py-2 rounded-xl border border-[#DCD7CD] text-sm focus:outline-none focus:border-[#3B6E6C]" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">信件主旨</label>
+          <input type="text" id="compose-mail-subject" required placeholder="例如：本週閱讀進度提醒"
+            class="w-full px-3.5 py-2 rounded-xl border border-[#DCD7CD] text-sm focus:outline-none focus:border-[#3B6E6C]" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">信件內容</label>
+          <textarea id="compose-mail-body" required rows="5" placeholder="請輸入信件內容..."
+            class="w-full p-3.5 rounded-xl border border-[#DCD7CD] text-sm focus:outline-none focus:border-[#3B6E6C]"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeTeacherComposeMailModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">
+            取消
+          </button>
+          <button type="submit" class="btn-primary px-5 py-2 rounded-xl text-xs font-semibold">
+            立即寄出信件
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 彈窗 10：圖片放大檢視 Lightbox ==================== -->
   <div id="modal-image-lightbox" onclick="closeImageLightbox()" class="fixed inset-0 bg-black/75 z-50 hidden items-center justify-center p-4 cursor-zoom-out">
     <img id="lightbox-img" src="" alt="放大檢視" class="max-w-full max-h-[90vh] rounded-xl shadow-2xl object-contain" />
   </div>
@@ -937,6 +1026,7 @@
 
     let currentUser = null;
     let pendingAskTarget = null;
+    let activeReplyAskId = null;
     let activeQuiz = {
       isMerged: false,
       isMistakeReview: false,
@@ -1056,7 +1146,6 @@
     // =========================================================
     function isScheduleVisibleForCurrentUser(scheduleItem) {
       if (!currentUser) return false;
-      // 教師登入可檢視所有設定的日程
       if (currentUser.role === 'teacher') return true;
 
       const rawTarget = String(scheduleItem.target || 'ALL').trim();
@@ -1070,7 +1159,6 @@
       return tokens.some(tok => {
         if (tok.toUpperCase() === 'ALL') return true;
         if (tok === myId) return true;
-        // 精準比對群組名稱，或支援前綴/關鍵字比對（例如設為「8」或「八年級」，可匹配「801」「八年級A班」）
         return myGroups.some(g => g === tok || g.includes(tok));
       });
     }
@@ -1491,7 +1579,7 @@
     }
 
     // =========================================================
-    // 7. 學生「舉手發問」、學生「🙋 我的提問紀錄」與教師提問箱功能
+    // 7. 學生「舉手發問」、學生「🙋 我的提問紀錄」與教師「✍️ 回覆並寄信」
     // =========================================================
     function openRaiseHandForCurrentQuestion() {
       const q = activeQuiz.questions[activeQuiz.currentIndex];
@@ -1549,7 +1637,8 @@
         questionId: pendingAskTarget.questionId,
         questionSnippet: pendingAskTarget.questionSnippet,
         content: content,
-        status: '待回覆'
+        status: '待回覆',
+        teacherReply: ''
       };
 
       studentQuestionsDB.push(newAsk);
@@ -1564,7 +1653,6 @@
       showToast('已送出你的提問！可在頂部「🙋 我的提問」查看處理進度');
     }
 
-    // 學生查看「🙋 我的提問紀錄」彈窗
     function openStudentMyAsksModal() {
       renderStudentMyAsksModal();
       const modal = document.getElementById('modal-student-my-asks');
@@ -1622,10 +1710,17 @@
               ${escapeHtml(ask.content)}
             </div>
 
+            ${ask.teacherReply ? `
+              <div class="mt-2.5 text-sm text-[#2C3539] bg-[#F4F8F7] p-3.5 rounded-lg border border-[#CFE0DD] whitespace-pre-line">
+                <span class="text-xs font-bold text-[#3B6E6C] block mb-1">💡 老師的回覆解答：</span>
+                ${formatRichContent(ask.teacherReply)}
+              </div>
+            ` : ''}
+
             ${qObj ? `
               <details class="mt-2.5 text-xs">
                 <summary class="cursor-pointer text-[#3B6E6C] font-semibold hover:underline">展開原題正解與解析</summary>
-                <div class="mt-2 p-3 rounded-lg bg-[#F4F8F7] border border-[#DCE7E5] text-slate-700 space-y-1.5">
+                <div class="mt-2 p-3 rounded-lg bg-[#FAF9F6] border border-[#E6E2D8] text-slate-700 space-y-1.5">
                   <div><b>正確答案：</b>(${optLabels[qObj.answer]}) ${formatInlineRichText(escapeHtml(qObj.options[qObj.answer] || ''))}</div>
                   <div><b>解析說明：</b>${formatRichContent(qObj.explanation || '無補充解析')}</div>
                 </div>
@@ -1679,34 +1774,164 @@
               <div class="text-xs sm:text-sm font-medium text-[#2C3539] whitespace-pre-line">
                 「${escapeHtml(ask.content)}」
               </div>
+              ${ask.teacherReply ? `
+                <div class="text-xs text-[#2C3539] bg-[#F4F8F7] px-3 py-2 rounded-lg border border-[#DCE7E5] whitespace-pre-line">
+                  <span class="font-bold text-[#3B6E6C]">💡 老師已回覆：</span>${escapeHtml(ask.teacherReply)}
+                </div>
+              ` : ''}
             </td>
-            <td class="py-3 px-4 text-right">
-              ${isResolved
-                ? `<span class="inline-block px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-semibold">✓ 已解惑</span>`
-                : `<button type="button" onclick="markAskAsResolved('${ask.id}')"
-                    class="px-3 py-1.5 rounded-lg bg-[#3B6E6C] text-white hover:bg-[#2F5856] text-xs font-semibold">
-                    標記已解惑
-                  </button>`
-              }
+            <td class="py-3 px-4 text-right space-y-1.5">
+              <div>
+                ${isResolved
+                  ? `<span class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-semibold">✓ 已解惑</span>`
+                  : `<span class="inline-block px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-semibold">待回覆</span>`
+                }
+              </div>
+              <button type="button" onclick="openTeacherReplyAskModal('${ask.id}')"
+                class="px-3 py-1.5 rounded-lg ${isResolved ? 'border border-[#3B6E6C] text-[#3B6E6C] hover:bg-[#F0F5F4]' : 'btn-primary'} text-xs font-semibold">
+                ${isResolved ? '✍️ 補充回覆' : '✍️ 回覆並寄信'}
+              </button>
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    function markAskAsResolved(askId) {
-      const target = studentQuestionsDB.find(a => String(a.id) === String(askId));
-      if (!target) return;
-      target.status = '已解惑';
+    function openTeacherReplyAskModal(askId) {
+      const ask = studentQuestionsDB.find(a => String(a.id) === String(askId));
+      if (!ask) return;
+
+      activeReplyAskId = ask.id;
+      document.getElementById('reply-ask-subtitle').textContent = `收件學生：${ask.classGroup}・${ask.studentId} ${ask.studentName}`;
+      document.getElementById('reply-ask-set-meta').textContent = `試卷 ${ask.setId} ｜ 題號 ${ask.questionId}`;
+      document.getElementById('reply-ask-time').textContent = ask.time;
+      document.getElementById('reply-ask-student-msg').textContent = `學生提問：「${ask.content}」`;
+      document.getElementById('reply-ask-textarea').value = ask.teacherReply || '';
+      document.getElementById('reply-ask-sendmail-cb').checked = true;
+
+      const qObj = questionsDB.find(q => String(q.id).trim() === String(ask.questionId).trim());
+      const origBox = document.getElementById('reply-ask-original-q');
+      if (qObj) {
+        const optLabels = ['A', 'B', 'C', 'D'];
+        origBox.innerHTML = `
+          <div class="border-t border-[#E5DFD3] pt-2 mt-1 space-y-1">
+            <div><b>原題題幹：</b>${escapeHtml(qObj.text)}</div>
+            <div><b>正確答案：</b>(${optLabels[qObj.answer]}) ${escapeHtml(qObj.options[qObj.answer] || '')}</div>
+            <div><b>題庫原解析：</b>${escapeHtml(qObj.explanation || '無')}</div>
+          </div>
+        `;
+      } else {
+        origBox.innerHTML = '';
+      }
+
+      const modal = document.getElementById('modal-teacher-reply-ask');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeTeacherReplyAskModal() {
+      const modal = document.getElementById('modal-teacher-reply-ask');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      activeReplyAskId = null;
+    }
+
+    function submitTeacherReplyAskForm(e) {
+      e.preventDefault();
+      if (!activeReplyAskId) return;
+
+      const ask = studentQuestionsDB.find(a => String(a.id) === String(activeReplyAskId));
+      if (!ask) return;
+
+      const replyText = document.getElementById('reply-ask-textarea').value.trim();
+      const sendMail = document.getElementById('reply-ask-sendmail-cb').checked;
+      if (!replyText) return;
+
+      ask.status = '已解惑';
+      ask.teacherReply = replyText;
+
+      const mailId = 'M' + String(Date.now()).slice(-6);
+      const mailSubject = `[提問回覆] 關於試卷 ${ask.setId}（題號 ${ask.questionId}）的疑問`;
+      const mailBody = `【你的提問】\n${ask.content}\n\n【老師解答】\n${replyText}`;
+
+      if (sendMail) {
+        messagesDB.push({
+          id: mailId,
+          target: String(ask.studentId).trim(),
+          subject: mailSubject,
+          body: mailBody,
+          date: TODAY_STR,
+          readStatus: '',
+          readBy: ''
+        });
+      }
 
       postToGoogleSheet({
-        action: 'resolveStudentQuestion',
-        askId: askId,
-        status: '已解惑'
+        action: 'replyAndSendMail',
+        askId: ask.id,
+        replyText: replyText,
+        sendMail: sendMail,
+        mailId: mailId,
+        studentId: ask.studentId,
+        mailSubject: mailSubject,
+        mailBody: mailBody,
+        mailDate: TODAY_STR
       });
 
+      closeTeacherReplyAskModal();
       renderTeacherStudentQuestionsTable();
-      showToast('已將此提問標記為「已解惑」並同步試算表');
+      renderTeacherMailboxTable();
+      showToast(sendMail
+        ? `已回覆 ${ask.studentName} 的提問，並同步寄出系統信件！`
+        : `已更新 ${ask.studentName} 的提問解答！`
+      );
+    }
+
+    function openTeacherComposeMailModal() {
+      document.getElementById('compose-mail-target').value = '';
+      document.getElementById('compose-mail-subject').value = '';
+      document.getElementById('compose-mail-body').value = '';
+      const modal = document.getElementById('modal-teacher-compose-mail');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeTeacherComposeMailModal() {
+      const modal = document.getElementById('modal-teacher-compose-mail');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function submitTeacherComposeMailForm(e) {
+      e.preventDefault();
+      const target = document.getElementById('compose-mail-target').value.trim();
+      const subject = document.getElementById('compose-mail-subject').value.trim();
+      const body = document.getElementById('compose-mail-body').value.trim();
+      if (!target || !subject || !body) return;
+
+      const mailId = 'M' + String(Date.now()).slice(-6);
+      messagesDB.push({
+        id: mailId,
+        target: target,
+        subject: subject,
+        body: body,
+        date: TODAY_STR,
+        readStatus: '',
+        readBy: ''
+      });
+
+      postToGoogleSheet({
+        action: 'sendTeacherMail',
+        mailId: mailId,
+        target: target,
+        subject: subject,
+        body: body,
+        date: TODAY_STR
+      });
+
+      closeTeacherComposeMailModal();
+      renderTeacherMailboxTable();
+      showToast(`已成功寄出系統信件給「${target}」！`);
     }
 
     // =========================================================
@@ -1811,7 +2036,7 @@
       if (!tbody) return;
 
       if (messagesDB.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-xs text-slate-400">試算表「教師信箱」目前尚無留言資料。</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-xs text-slate-400">目前信箱尚無留言資料，可點擊右上角「＋ 撰寫新信件」發送。</td></tr>`;
         return;
       }
 
