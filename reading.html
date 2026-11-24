@@ -1850,9 +1850,36 @@
       ask.status = '已解惑';
       ask.teacherReply = replyText;
 
+      // 從題庫尋找對應原題，組裝完整題目、選項、正解與解析進入信件內文
+      const qObj = questionsDB.find(q => String(q.id).trim() === String(ask.questionId).trim());
+      const optLabels = ['A', 'B', 'C', 'D'];
+      let originalQuestionBlock = '';
+
+      if (qObj) {
+        const passagePart = qObj.passage && qObj.passage.trim()
+          ? `閱讀文本：\n${qObj.passage.trim()}\n\n`
+          : '';
+        const optionsPart = (qObj.options || [])
+          .map((opt, idx) => `(${optLabels[idx]}) ${opt}`)
+          .join('\n');
+        const ansLabel = optLabels[qObj.answer] || '';
+        const ansText = qObj.options?.[qObj.answer] || '';
+        const expText = qObj.explanation || '無補充解析';
+
+        originalQuestionBlock =
+          `【原題內容】\n` +
+          `${passagePart}` +
+          `題目：${qObj.text}\n` +
+          `${optionsPart}\n` +
+          `正確答案：(${ansLabel}) ${ansText}\n` +
+          `題庫解析：${expText}\n\n`;
+      } else if (ask.questionSnippet) {
+        originalQuestionBlock = `【原題摘要】\n${ask.questionSnippet}\n\n`;
+      }
+
       const mailId = 'M' + String(Date.now()).slice(-6);
       const mailSubject = `[提問回覆] 關於試卷 ${ask.setId}（題號 ${ask.questionId}）的疑問`;
-      const mailBody = `【你的提問】\n${ask.content}\n\n【老師解答】\n${replyText}`;
+      const mailBody = `${originalQuestionBlock}【你的提問】\n${ask.content}\n\n【老師解答】\n${replyText}`;
 
       if (sendMail) {
         messagesDB.push({
@@ -1882,7 +1909,7 @@
       renderTeacherStudentQuestionsTable();
       renderTeacherMailboxTable();
       showToast(sendMail
-        ? `已回覆 ${ask.studentName} 的提問，並同步寄出系統信件！`
+        ? `已回覆 ${ask.studentName} 的提問，並附上原題與解析寄出系統信件！`
         : `已更新 ${ask.studentName} 的提問解答！`
       );
     }
